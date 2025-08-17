@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Lewis AI Canvas Test</title>
+    <style>
+      /* Give the canvas a visible background */
+      #myCanvas {
+        border: 2px solid #42f563;
+        background-color: yellow;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lewis AI Canvas Test</h1>
+    <canvas id="myCanvas" width="750" height="450"></canvas>
+
+    <script>
+      // Grab the canvas element
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Draw a green rectangle
+      ctx.fillStyle = "#42f563";
+      ctx.fillRect(50, 50, 100, 400);
+
+      // Draw some text
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Canvas is working!", 160, 100);
+    </script>
+  </body>
+</html>
