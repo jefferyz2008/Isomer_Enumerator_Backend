@@ -1,33 +1,153 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Lewis AI Canvas Test</title>
-    <style>
-      /* Give the canvas a visible background */
-      #myCanvas {
-        border: 2px solid #42f563;
-        background-color: yellow;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Lewis AI Canvas Test</h1>
-    <canvas id="myCanvas" width="750" height="450"></canvas>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lewis AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
 
-    <script>
-      // Grab the canvas element
+    h1 {
+      color: #3dca6d;
+    }
+
+    #instructions {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    #controls {
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      padding: 5px 10px;
+      font-size: 14px;
+      margin-right: 5px;
+      width: 200px;
+    }
+
+    button {
+      padding: 5px 10px;
+      margin-right: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #3dca6d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #35b85c;
+    }
+
+    canvas {
+      border: 2px solid #3dca6d;
+      background-color: #3dca6d;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Enter Molecule Formula</h1>
+  <div id="instructions">Use ^ when representing a charge. For example, CO3^2-</div>
+
+  <div id="controls">
+    <input type="text" id="moleculeInput" placeholder="e.g. H2O"></input>
+    <button type="button" id="generate">Generate Molecule</button>
+    <button type="button" id="prevIsomer">Previous Isomer</button>
+    <button type="button" id="nextIsomer">Next Isomer</button>
+  </div>
+
+  <canvas id="myCanvas" width="850" height="450"></canvas>
+
+  <script src="renderer.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
       const canvas = document.getElementById("myCanvas");
       const ctx = canvas.getContext("2d");
+      const input = document.getElementById("moleculeInput");
+      const generateButton = document.getElementById("generate");
+      const next = document.getElementById("nextIsomer");
+      const prev = document.getElementById("prevIsomer");
 
-      // Draw a green rectangle
-      ctx.fillStyle = "#42f563";
-      ctx.fillRect(50, 50, 100, 400);
+      let currentIsomer = 0;
+      let currentMolecule = null;
 
-      // Draw some text
-      ctx.fillStyle = "black";
-      ctx.font = "20px Arial";
-      ctx.fillText("Canvas is working!", 160, 100);
-    </script>
-  </body>
+      async function fetchMolecules(formula) {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/molecule?moleculeName=${encodeURIComponent(formula)}`);
+          return await response.json();
+        } catch (err) {
+          console.error("Failed to fetch bonds:", err);
+        }
+      }
+
+      async function drawMolecule(name) {
+        if (!name){
+          return
+        }
+        ctx.font = "40px Arial";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillText("thinking...", 200, 200);
+
+        currentMolecule = await fetchMolecules(name);
+        const numIsomers = Object.values(currentMolecule).length;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawAllAtoms(currentMolecule["0"]["atoms"], ctx);
+        drawAllBonds(currentMolecule["0"]["bonds"], ctx);
+        drawAllBonds(currentMolecule["0"]["lonePairs"], ctx);
+
+        if (numIsomers) {
+          ctx.fillText(`Isomer 1 out of ${numIsomers}`, 50, 50);
+        }
+      }
+
+      function drawCurrentIsomer() {
+        if (!currentMolecule) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const numIsomers = Object.values(currentMolecule).length;
+        const isomerStr = currentIsomer.toString();
+
+        drawAllAtoms(currentMolecule[isomerStr]["atoms"], ctx);
+        drawAllBonds(currentMolecule[isomerStr]["bonds"], ctx);
+        drawAllBonds(currentMolecule[isomerStr]["lonePairs"], ctx);
+
+        if (numIsomers) {
+          ctx.fillText(`Isomer ${currentIsomer + 1} out of ${numIsomers}`, 50, 50);
+        }
+      }
+
+      generateButton.addEventListener("click", () => {
+        currentIsomer = 0;
+        drawMolecule(input.value);
+      });
+
+      next.addEventListener("click", () => {
+        if (!currentMolecule) return;
+        const numIsomers = Object.values(currentMolecule).length;
+        currentIsomer = (currentIsomer + 1) % numIsomers;
+        drawCurrentIsomer();
+      });
+
+      prev.addEventListener("click", () => {
+        if (!currentMolecule) return;
+        const numIsomers = Object.values(currentMolecule).length;
+        currentIsomer = (currentIsomer - 1 + numIsomers) % numIsomers;
+        drawCurrentIsomer();
+      });
+    });
+  </script>
+</body>
 </html>
+
