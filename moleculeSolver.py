@@ -1,64 +1,69 @@
+#all DFS/backtracking algorithms
 from chemistry import*
 from moleculeClass import*
 from tokenizer import*
 from backtracker import*
 from breadthFirst import*
+import time
 def getAllStructures(molecule):
     "takes all skeletal structures and finds solutions for them"
     moleculeList=getSkeletalStructuresDFS(molecule)
-    #debugging purposes
-    print(str(len(moleculeList))+"this is how many skeletal structures there are")
-    #prettyPrintList(moleculeList)
-   # moleculeList=[moleculeList[12]]
-    
+    print(len(moleculeList))
     validStructs=[]
+    #default min score
     minScore=[float("inf")]
     for molecule in moleculeList:
-        #the function takes in single-bonded molecules that have an octet on 
-        #every atom
-       # molecule.addUntilOctet()
-       # for atom in molecule.atoms:
-           # assert(atom.hasOctet())
-        result=backtrackSkeletalStructure(molecule,[],minScore)
+        result=backtrackSkeletalStructure(molecule,[],[],[],minScore)
         if result:
            minScore=[result[1]]
            validStructs+=result[0]
-   # prettyPrintList(validStructs)
     return validStructs
 
+def testBacktrack(molecule):
+    moleculeList=getSkeletalStructuresDFS(molecule)
+  #  prettyPrintList(moleculeList)
+    print(len(moleculeList))
+    completeList=[]
+    minScore=[float('inf')]
+    start=time.perf_counter()
+    for mol in moleculeList:
+        newMolecule=backtrackPiBondsLonePairs(mol,[],None,minScore,set())
+        minScore=newMolecule[1]
+        completeList+=newMolecule[0]
+    end=time.perf_counter()
+  #  print(start-end)
+    return completeList
+        
 def getBestStructures(molecule):
     """sorts molecules based on score and returns a list of the lowest score
     molecules"""
-    validStructures=getAllStructures(molecule)
-    validStructures.sort(key=lambda molecule: molecule.getScore())
-    allBestStructs=[molecule for molecule in validStructures if
-                     molecule.getScore()==validStructures[0].getScore()]
+    print("getting structure")
+    func=getAllStructures if molecule.expandedOctet else testBacktrack
+    #func=testBacktrack
+    #validStructures=getAllStructures(molecule)
+    validStructures2=func(molecule)
+    validStructures2.sort(key=lambda molecule: molecule.getScore())
+    allBestStructs=[molecule for molecule in validStructures2 if
+                     molecule.getScore()==validStructures2[0].getScore()]
     return allBestStructs
+   # return validStructures2
+   
+    return validStructures2
+    return validStructures
+
+start=time.perf_counter()
+#print(start)
+molecule=getBestStructures(tokenizeMolecule("H2SO4"))
+
+end=time.perf_counter()
+print(end-start)
+#print(molecule[0].getPolarity())
+prettyPrintList(molecule)
+#prettyPrintList([mol for mol in molecule if mol.getScore()==0])
 
 
 
-def solveExpandedOctet(molecule):
-    centralAtom=molecule.getCentralAtom()
-    for atom in molecule.atoms:
-        if not atom is centralAtom:
-            atom.bondTo(centralAtom,"-")
-            atom.addUntilOctet()
 
-#start_time = time.perf_counter()
-
-molecule=tokenizeMolecule("C3H4")
-
-prettyPrintList((getBestStructures(molecule)))
-#molecule.rearrange()
-#print(str(molecule.getScore())+"score")
-
-
-#end_time = time.perf_counter()
-
-# Calculate the elapsed time
-#elapsed_time = end_time - start_time
-#print(elapsed_time)
-    
 
 
            
