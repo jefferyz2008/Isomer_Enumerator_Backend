@@ -2,48 +2,79 @@ from chemistry import Bond, Atom
 from helperFunctions import*
 import copy
 from collections import deque
-
+from specialDict import*
+from queue import PriorityQueue
 class Molecule:
-     def __init__(self,atoms,charge):
+     def __init__(self,atoms,charge,formula):
           #putting atoms with higher bonding capacity first
-          # makes adding bonds easier
+          #to make backtracking more efficient
           atoms.sort(key=lambda atom: (atom.prefBonds,
-                                        atom.atomicNumber), reverse=True)
+                                      atom.atomicNumber), reverse=True)
           self.atoms=atoms
           self.charge=charge
+          self.formula=formula
           #number of electrons molecule should have
           self.numElectrons=sum(atom.valenceElectrons for
                   atom in self.atoms) - self.charge
+          
+          #the number of electrons it does have
+          self.currentElectrons=0
 
+          #for formal charges
+          self.formalChargeSum=0
+
+          #number of electrons contained in bonds
+          self.bondElectrons=0
+
+          #the number of electrons that should be contained in bonds
+          self.idealBondElectrons=(sum([atom.octetElectrons for atom in atoms])-
+                                   self.numElectrons)
+
+          #this is a dictionary with an atom as a key and a bool, true or false
+          #representing whether the atom has an octet.
+          self.octetDict=dictWithCounts()
+          for atom in atoms:
+              self.octetDict[atom]=True if (atom.hasOctet()==True) else False
+
+          #controls expanded octet if it clearly doesnt have one
+          self.numAtoms=len(atoms)
+          if self.numAtoms<3 or self.numAtoms>8:
+              for atom in atoms:
+                  atom.canExpandOctet=False
+          
+          for atom in atoms:
+              if self.count(atom.symbol)!=1:
+                  atom.canExpandOctet=False
+          self.expandedOctet=False
+          for atom in atoms:
+              if atom.canExpandOctet:
+                  self.expandedOctet=True
+                  
+          
      def sortAtoms(self):
-         """sorts atoms for turning the molecule into a string"""
-         self.atoms.sort(key=lambda atom:(len(atom.electronDomains),
+         """returns a list of sorted atoms for turning the molecule into a string"""
+         atomList=self.atoms[:]
+         atomList.sort(key=lambda atom:(atom.molarMass,len(atom.electronDomains),
                         atom.countBonds(),atom.getMolarMassSum(),atom.molarMass)
                         ,reverse=True)
+         return atomList
+
+     def count(self,symbol):
+         assert(isinstance(symbol,str))
+         """counts the number of a given type of atom in molecule"""
+         return len([atom for atom in self.atoms if atom.symbol==symbol])
      
-     def getTotalElectrons(self):
-         """returns the amount of electrons it does have"""
-         totalElectrons=0
-         for atom in self.atoms:
-             for domain in atom.electronDomains:
-                 ##each bond appears twice, so we divide by 2
-                 if isinstance(domain,Bond):
-                     totalElectrons+=domain.electrons/2
-                 elif domain==":":
-                     totalElectrons+=2
-         return totalElectrons
      
      def hasEnoughElectrons(self):
          """returns True if the molecule has exactly enough electrons
             returns False if it has too many
             and returns None if it has too few"""
-         totalElectrons=self.getTotalElectrons()
-         numElectrons=self.numElectrons
-         if totalElectrons>numElectrons:
-             return False
-         elif totalElectrons<numElectrons:
-             return None
-         return True
+         
+         #expanded octet is an edge case:
+         electrons=self.currentElectrons
+         shouldHave=self.numElectrons
+         return True if electrons==shouldHave else (False if 
+                                        electrons>shouldHave else None)
 
      def getMolarMass(self):
         """returns total molar mass of molecule"""
@@ -51,12 +82,11 @@ class Molecule:
      
      def isComplete(self):
          """returns True if the molecule is fully complete"""
-         if not self.checkFormalCharges():
+         octetDict=self.octetDict
+         if octetDict.hasValue(False):
              return False
-         for atom in self.atoms:
-             if not atom.hasOctet():
-                return False
          return self.hasEnoughElectrons()
+           
     
      def checkFormalCharges(self):
          #sum of formal charges is the charge of molecule
@@ -65,7 +95,6 @@ class Molecule:
              formalCharge=atom.getFormalCharge()
              formalChargeSum+=formalCharge
          return formalChargeSum==self.charge
-     
 
      def isValid(self):
          """returns true if molecule is valid"""
@@ -81,7 +110,7 @@ class Molecule:
          """rearranges the electron domains of each atom"""
          for atom in self.atoms:
              atom.rearrange()
-    
+
      def isBondedOrCircular(self):
         """returns a tuple with 2 bools
            the first represents whether the molecule is completely bonded
@@ -97,7 +126,6 @@ class Molecule:
             if not isCircular:
                if current in visited:
                    isCircular=True
-                   break
             visited.add(current)
 
             for domain in current.electronDomains:
@@ -123,7 +151,7 @@ class Molecule:
                  if isinstance(domain,Bond) and domain not in bondList:
                      bondList.append(domain)
         bondList.sort(key=lambda bond: 
-                min(bond.atomOne.valenceElectrons,bond.atomTwo.valenceElectrons)
+                min(bond.atomOne.prefBonds,bond.atomTwo.prefBonds)
                 ,reverse=True)
         return bondList
      
@@ -134,81 +162,95 @@ class Molecule:
                 if bond.atomOne.symbol != "H" and bond.atomTwo.symbol != "H"]
      
      def sumFormalCharges(self):
-        """gets sum of all absolute value of formal charges in a molecule"""
-        charges = [abs(atom.getFormalCharge()) for atom in self.atoms]
+        """gets sum of all absolute value of formal charges in a molecule
+           used for expanded octet purposes"""
+        charges = [abs(atom.getFormalCharge()) for atom in self.atoms if
+                    (not (atom.canExpandOctet) and atom.hasOctet())]
         return sum(charges)
-     
-     def getScore(self):
+                       
+     def getScore(self,isComplete=True):
+                       #isComplete is there so we don't punish molecules that
+                       #aren't complete yet
          """returns an int that says how stable the molecule is, lower
          scores preffered"""
-         score=self.sumFormalCharges()
+         if self.expandedOctet and not (self.isComplete()):
+             #if its expanded octet, we must recalculate formal charges
+             #a different way
+             score=self.sumFormalCharges()
+         else:
+             score=self.formalChargeSum
          bondList=self.getBondList()
          for bond in bondList:
              bondType=bond.type
-             atomOne_=bond.atomOne
-             atomTwo_=bond.atomTwo
+             atomOne=bond.atomOne
+             atomTwo=bond.atomTwo
 
-             if bondType=="-":
+             if bondType=="-" and isComplete:
                  #all these single bonds are unstable
-                 #if atoms don't have octets, they can still omit these bonds
-                 if not (atomOne_.hasOctet() and atomTwo_.hasOctet()):
-                     continue
                  if bond.sameTypeAtoms("O-O"):
-                     score+=10
+                     score+=20
                  if bond.sameTypeAtoms("N-N"):
                      score+=10
                  if bond.sameTypeAtoms("F-F"):
                      score+=20
                  if bond.sameTypeAtoms("O-F"):
                      score+=7
-             #these triple bonds are unstable
-             if bondType=="#":
-                 
-                 if atomOne_.symbol=="O" or atomTwo_.symbol=="O":
-                     score+=15
-                 if atomOne_.symbol=="F" or atomTwo_.symbol=="F":
-                     score+=15
-                    
-            #these bonds with flourine are unstable
-             if bond.sameTypeAtoms("C-F"):
-                 if bondType=="#":
-                     score+=30
-                 if bondType=="=":
-                     score+=10   
-            #Oxygen doesn't like 3 bonds    
-             if bond.atomOne.symbol=="O" and bond.atomOne.countBonds()>2:
-                 score+=15
-             if bond.atomTwo.symbol=="O" and bond.atomTwo.countBonds()>2:
-                 score+=15
-
+                 if bond.sameTypeAtoms("O-N"):
+                     score+=1/2
+         if isComplete:
+            score+= self.getFormalChargeSharing(self.sumFormalCharges())
+         #   score+=self.scoreElectronegativity()
          return score
      
-     def hasAtomThere(self,xPos,yPos):
-         """returns true if an atom overlaps another atom"""
+     def scoreElectronegativity(self):
+         """scores molecule based on how formal charges are distributed 
+         with respect to electronegativity"""
+         electronegList=list({atom.electroNegativity for atom in self.atoms})
+         electronegList.sort()
+         numAtoms=len(list({atom.symbol for atom in self.atoms}))
+         penalty=0
          for atom in self.atoms:
-             if getDistance(atom.centerX,atom.centerY,xPos,yPos)<=10:
-                 return True
-         return False
+             formalCharge=atom.getFormalCharge()
+             if formalCharge>0:
+                 if atom.electroNegativity>2.4:
+                     penalty+=10
+           #  elif formalCharge<0:
+               #  if atom.electroNegativity
+         return penalty
+             
          
-     def allHasPositions(self):
-         """checks if every atom is assigned to a centerX and centerY"""
-         for atom in self.atoms:
-             if not (atom.centerX and atom.centerY):
-                 return False 
-         return True
+     def getFormalChargeSharing(self,sumCharges):
+         """returns a number indicating how well spread the formal charge is"""
+        
+         #this is the absolute value of all formal charges
+         sumCharges=self.sumFormalCharges()
+         #number of atoms in the molecule that has a formal charge
+         numChargeAtoms=len([atom for atom in  self.atoms if 
+                                atom.getFormalCharge()])
+         if not numChargeAtoms:
+             return 0
+         return sumCharges/numChargeAtoms
+     
     
-     def molToStr(self):
+     def molToStr(self,polarityCheck=False):
          """turns a molecule into a string unique to that molecule"""
-         copyMol=self.cloneMolecule()
-         copyMol.rearrange()
-         copyMol.sortAtoms()
+
+         self.rearrange()
+         atomList=self.sortAtoms()
          returnStr=""
-         for atom in copyMol.atoms:
+         for atom in atomList:
              returnStr+=atom.symbol+"|"
              for domain in atom.electronDomains:
                  if isinstance(domain,Bond):
-                     returnStr+=domain.type+domain.getOther(atom).symbol
-                 else:
+                     #for checking polarity, we don't care about bond type
+                     #because of resonance
+                     if polarityCheck:
+                         returnStr+="-"+domain.getOther(atom).symbol
+                     else:
+                        returnStr+=domain.type+domain.getOther(atom).symbol
+                 elif not polarityCheck:
+                     #for checking polarity, we don't care about lone pairs
+                     #because of resonance
                      returnStr+=":"
          return returnStr
 
@@ -217,8 +259,11 @@ class Molecule:
         oldToNew={}
         for atom in self.atoms:
             oldToNew[atom]=Atom(atom.symbol)
+            newAtom=oldToNew[atom]
+            newAtom.canExpandOctet=atom.canExpandOctet
             for _ in range(atom.electronDomains.count(":")):
-                oldToNew[atom].addLonePair()
+                newAtom.addLonePair()
+            newAtom.currentElectrons=atom.currentElectrons
         allBonds=self.getBondList()
         for bond in allBonds:
             atom1=oldToNew[bond.atomOne]
@@ -229,7 +274,11 @@ class Molecule:
         atomList=[]
         for key in oldToNew:
             atomList.append(oldToNew[key])
-        return Molecule(atomList,self.charge)
+        newMolecule=Molecule(atomList,self.charge,self.formula)
+        newMolecule.formalChargeSum=self.formalChargeSum
+        newMolecule.expandedOctet=self.expandedOctet
+        newMolecule.currentElectrons=self.currentElectrons
+        return newMolecule
   
      def addUntilOctet(self):
          """for all atoms in the molecule, give them all octets"""
@@ -237,6 +286,128 @@ class Molecule:
              atom.addUntilOctet()
          return True
      
+     def removeAllLonePairs(self):
+         """removes all lone pairs from a molecule"""
+         removedLonePairs=0
+         for atom in self.atoms:
+             while atom.removeLonePair():
+                 removedLonePairs+=1
+         self.currentElectrons-=removedLonePairs*2
+         return True
+             
+     
+     def getCenterAtom(self):
+         """returns center Atom for expanded octets"""
+         for atom in self.atoms:
+             if self.count(atom.symbol)==1:
+                 return atom
+         return self.atoms[0]
+    
+     def hasSingleCenterAtom(self):
+         """returns true if the molecule has a single central atom, used 
+         for expanded octets"""
+         molecule=self.cloneMolecule()
+         molecule.atoms.sort(key=lambda atom: atom.valenceElectrons,
+                             reverse=True)
+         #the central atom has the most valence electrons
+         centralAtom=self.getCenterAtom()
+         if centralAtom.countDomains("bond")==1:
+             return False
+         visited=set()
+         visited.add(centralAtom)
+         #see if every atom can be explored through the central atom
+         for domain in centralAtom.electronDomains:
+             if isinstance(domain,Bond):
+                 visited.add(domain.getOther(centralAtom))
+         return len(visited)==len(self.atoms)
+                 
+
+     def split(self,atom,bond):
+         """returns a 'molecule' reprsenting the frontier of the atom with 
+         respect to the given bond. Used for determing polarity"""
+         bondSet=set()
+         bondSet.add(bond)
+         queue=deque()
+         queue.append(bond.getOther(atom))
+         allAtoms=[]
+         while queue:
+             current=queue.popleft()
+             allAtoms.append(current)
+             for domain in current.electronDomains:
+                 if isinstance(domain,Bond) and domain not in bondSet:
+                     bondSet.add(domain)
+                     queue.append(domain.getOther(current))
+         newMolecule=Molecule(allAtoms,0,"")
+         return newMolecule.molToStr(True)
+    
+     def getPolarity(self):
+         """returns polar if molecule is polar nonpolar otherwise"""
+         hasNotHydroCarbon=False
+         #if it has lone pairs and it's not square planar or linear, then
+         #it's nonpolar
+         for atom in self.atoms:
+             if (not hasNotHydroCarbon) and atom.symbol!="H" and atom.symbol!="C":
+                 hasNotHydroCarbon=True
+             if atom.countDomains("bond")==1:
+                 continue
+             vsepr=atom.getVSEPR()
+             if atom.countDomains(":") and (not (vsepr[0]=="linear" 
+                                                 or vsepr[0]=="Square Planar")):
+                 return "polar"
+         if not hasNotHydroCarbon:
+             return "non-polar"
+         
+         #if theres an odd number of atoms or theres a central atom
+         if len(self.atoms)%2==1 or self.hasSingleCenterAtom():
+             for atom in self.atoms:
+                 if atom.symbol=="H":
+                     continue
+                 if atom.countDomains("bond")==1:
+                     continue
+                 frontierSet=set()
+                 for domain in atom.electronDomains:
+                     if domain==":":
+                         continue
+                     frontierSet.add(self.split(atom,domain))
+                 if len(frontierSet)==1:
+              
+                    return "non-polar"
+             return "polar"
+             
+         else:
+             for bond in self.getBondList():
+                 if self.split(bond.atomOne,bond)==self.split(bond.atomTwo,bond):
+                     return "non-polar"
+             return "polar"
+         
+##########ALL THE FOLLOWING FUNCTIONS ARE DEDICATED TO ASSIGNING ATOMS POSITIONS
+#ON THE CANVAS
+     def positionsToStr(self):
+         #returns a string representing the positions of all the atoms
+         returnStr=""
+         self.rearrange()
+         atomList=self.sortAtoms()
+         for atom in atomList:
+             returnStr+=(atom.atomToStr()+"|"+str(atom.centerX)+","+
+                         str(atom.centerY))
+         return returnStr
+                 
+             
+
+     def recursiveAssignPositions(self,width,height,positionsSet=set()):
+         if not positionsSet:
+            self.atoms[0].centerX=width/2
+            self.atoms[0].centerY=height/2
+         positionStr=self.positionsToStr()
+         if positionStr in positionsSet:
+             return self
+         positionsSet.add(positionStr)
+         #base case
+         if self.allHasPositions():
+             return self
+         
+
+         
      def assignPositions(self,width,height):#positionsList):
         """assign's the best positions to an atom for drawing"""
         queue=deque()
@@ -255,32 +426,15 @@ class Molecule:
                         current.centerX=predecessor.centerX+dX
                         current.centerY=predecessor.centerY+dY
                         break
+            #makes it so atoms with more bonds are positioned horizontally
+            current.electronDomains.sort(key=lambda bond: len(
+                self.split(current,bond)) if 
+                isinstance(bond,Bond) else 0, reverse=True)
             for domain in current.electronDomains:
                 if isinstance(domain,Bond) and domain not in bondSet:
                     queue.append((current,domain.getOther(current)))
                     bondSet.add(domain)
-        for bond in self.getBondList():
-            bond.startPos=(bond.atomOne.centerX,bond.atomOne.centerY)  
-            bond.endPos=(bond.atomTwo.centerX,bond.atomTwo.centerY) 
         return True
-     
-     def hasSingleCenterAtom(self):
-         """returns true if the molecule has a single central atom, used 
-         for expanded octets"""
-         molecule=self.cloneMolecule()
-         molecule.atoms.sort(key=lambda atom: atom.valenceElectrons,
-                             reverse=True)
-         #the central atom has the most valence electrons
-         centralAtom=molecule.atoms[0]
-         visited=set()
-         visited.add(centralAtom)
-         #see if every atom can be explored through the central atom
-         for domain in centralAtom.electronDomains:
-             if isinstance(domain,Bond):
-                 visited.add(domain.getOther(centralAtom))
-         return len(visited)==len(self.atoms)
-                 
-         
      
      def getLonePairs(self):
          """assigns positions to lone pairs"""
@@ -290,21 +444,47 @@ class Molecule:
              if True:
                 addedLPs=0
                 for dX,dY in [(-75,0),(75,0),(0,-75),(0,75)]:
-                    if not self.hasAtomThere(atom.centerX+dX,
-                                             atom.centerY+dY):
+                    alreadyThere=self.hasAtomThere(atom.centerX+dX,
+                                             atom.centerY+dY)
+                    if not alreadyThere or not atom.isBonded(alreadyThere):
                         if addedLPs>=numLonePairs:
-                            print("hi")
                             break
-                        positions[str(atom.centerX+dX/4)+","+
-str(atom.centerY+dY/4)]="90" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else "180"
+                        positions[str(atom.centerX+dX/3)+","+
+str(atom.centerY+dY/3)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
                         addedLPs+=1
-                        print(addedLPs,numLonePairs)
-
          return positions
-                 
+     
+     def assignBonds(self):
+        bonds={}
+        for bond in self.getBondList():
+            atomOne=bond.atomOne
+            atomTwo=bond.atomTwo
+
+            #type of the bond and - if it is horizontal or | if it is vertical
+            typeAndOrientation=bond.type+("|" if 
+                                atomOne.centerX==atomTwo.centerX else "-")
+            
+            bonds[str((atomOne.centerX+atomTwo.centerX)//2)+","
+                +str((atomOne.centerY+atomTwo.centerY)//2)]=typeAndOrientation
+        return bonds
+     
+     def hasAtomThere(self,xPos,yPos):
+         """returns true if an atom overlaps another atom"""
+         for atom in self.atoms:
+             if getDistance(atom.centerX,atom.centerY,xPos,yPos)<=10:
+                 return atom
+         return False
+     
+     def allHasPositions(self):
+         """checks if every atom is assigned to a centerX and centerY"""
+         for atom in self.atoms:
+             if not (atom.centerX and atom.centerY):
+                 return False 
+         return True
+     
+     
+
              
-             
-         
          
      
      
