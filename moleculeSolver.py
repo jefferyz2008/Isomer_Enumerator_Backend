@@ -51,16 +51,6 @@ def getBestStructures(molecule):
     return validStructures2
     return validStructures
 
-start=time.perf_counter()
-#print(start)
-molecule=getBestStructures(tokenizeMolecule("H2SO4"))
-
-end=time.perf_counter()
-print(end-start)
-#print(molecule[0].getPolarity())
-prettyPrintList(molecule)
-#prettyPrintList([mol for mol in molecule if mol.getScore()==0])
-
 
 
 
