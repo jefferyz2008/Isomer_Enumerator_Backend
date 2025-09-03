@@ -10,6 +10,7 @@ from tokenizer import*
 
 def getInfo(molecule):
     pass
+
 def getMolecule(molecule):
     """gets all the positions of the atoms, bonds, and  lp's in the molecule"""
     molecule.assignPositions(750,450)
@@ -31,6 +32,11 @@ def getMolecule(molecule):
     return {"atoms": atoms, "bonds": bonds,"lonePairs":lonePairs}
 
 api=FastAPI()
+
+@api.get("/")
+def root():
+    return {"msg": "Electron API is running"}
+    
 # allow requests from Electron (localhost)
 api.add_middleware(
     CORSMiddleware,
