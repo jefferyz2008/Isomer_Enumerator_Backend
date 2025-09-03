@@ -1,4 +1,4 @@
-import copy
+"""atom and bond classes and methods"""
 class Atom:
     def __init__(self,symbol):
         self.symbol=symbol
@@ -6,34 +6,51 @@ class Atom:
         #electron domains contain bonds and lone pairs
         self.electronDomains =[]
 
-
         #only these atoms are used in lewis structures
         allElements = {
-    "H":  [1.01, 1, 1, 1, False],
-    "C":  [12.01, 4, 4, 6, False],
-    "N":  [14.01, 5, 3, 7, False],
-    "O":  [16.00, 6, 2, 8, False],
-    "S":  [32.07, 6, 2, 16, True],
-    "F":  [19.00, 7, 1, 9, False],
-    "Cl": [34.45, 7, 1, 17, True],
-    "Br": [79.70, 7, 1, 35, True],
-    "P":  [30.97, 5, 3, 15, True],
-    "I":  [126.90, 7, 1, 53, True],
-    "He": [4.00, 8, 4, 2, False],
-    "Ne": [20.18, 8, 4, 10, False],
-    "Ar": [39.95, 8, 4, 18, True], 
-    "Kr": [83.80, 8, 4, 36, True],
-    "Xe": [131.29, 8, 4, 54, True],
-    "B":  [10.81, 3, 3, 5, False],
-    "Be": [9.01, 2, 2, 4, False],
-    "Si": [28.09, 2, 4, 14, True],
-    "Al": [26.98, 3, 3, 13, True]
-}
-        self.molarMass=allElements[symbol][0]
-        self.valenceElectrons=allElements[symbol][1]
-        self.prefBonds=allElements[symbol][2]
-        self.atomicNumber=allElements[symbol][3]
-        self.canExpandOctet=allElements[symbol][4]
+    "H":  [1.01, 1, 1, 1, False, 2.20],
+    "C":  [12.01, 4, 4, 6, False, 2.55],
+    "N":  [14.01, 5, 3, 7, False, 3.04],
+    "O":  [16.00, 6, 2, 8, False, 3.44],
+    "S":  [32.07, 6, 2, 16, True, 2.58],
+    "F":  [19.00, 7, 1, 9, False, 3.98],
+    "Cl": [34.45, 7, 1, 17, True, 3.16],
+    "Br": [79.70, 7, 1, 35, True, 2.96],
+    "P":  [30.97, 5, 3, 15, True, 2.19],
+    "I":  [126.90, 7, 1, 53, True, 2.66],
+    "He": [4.00, 8, 4, 2, False, 0.0],  
+    "Ne": [20.18, 8, 4, 10, False, 0.0],
+    "Ar": [39.95, 8, 4, 18, True, 0.0],
+    "Kr": [83.80, 8, 4, 36, True, 3.0],  # approximate
+    "Xe": [131.29, 8, 4, 54, True, 2.6], # approximate
+    "B":  [10.81, 3, 3, 5, False, 2.04],
+    "Be": [9.01, 2, 2, 4, False, 1.57],
+    "Si": [28.09, 4, 4, 14, True, 1.90],
+    "Al": [26.98, 3, 3, 13, True, 1.61]
+        }
+               
+        element=allElements[symbol]
+        self.molarMass=element[0]
+        self.valenceElectrons=element[1]
+        self.prefBonds=element[2]
+        self.atomicNumber=element[3]
+        self.canExpandOctet=element[4]
+        self.electroNegativity=element[5]
+        
+        #number of electrons attached to self
+        self.currentElectrons=0
+
+        #indicates number of electrons needed to complete an octet
+        self.octetElectrons=(8 if symbol not in {"B","Al","H","Be"} else 
+        (6 if symbol in {"B","Al"} else (4 if symbol=="Be" else 2)))
+
+        #For backtracking efficiency
+        self.numModifications=0
+
+        #for formal charge
+        self.formalCharge=0
+        
+        #only for indicating coordinates for drawing
         self.centerX=0
         self.centerY=0
 
@@ -53,16 +70,22 @@ class Atom:
         """count how many of a given domain is attached to an atom"""
         count=0
         for domain in self.electronDomains:
+            isBond=isinstance(domain,Bond)
             if isinstance(domain,str) and domain==":" and item==":":
                 count+=1
-            elif isinstance(domain,Bond) and domain.type=="-" and item=="-":
+                continue
+            elif isBond and domain.type=="-" and item=="-":
                 count+=1
-            elif isinstance(domain,Bond) and domain.type=="=" and item=="=":
+                continue
+            elif isBond and domain.type=="=" and item=="=":
                 count+=1
-            elif isinstance(domain,Bond) and domain.type=="#" and item=="#":
+                continue
+            elif isBond and domain.type=="≡" and item=="≡":
                 count+=1
-            elif isinstance(domain,Bond) and item=="bond":
+                continue
+            elif isBond and item=="bond":
                 count+=1
+                continue
         return count
     
     def countBonds(self):
@@ -74,29 +97,36 @@ class Atom:
         return total
     
     def getMolarMassSum(self):
-        """gets all the atoms connected to a given atom, and multiplies their molar
-        mass by the order of the bond between them"""
-
-    #used for rearraning atoms, to hash the molecule
+        """gets all the atoms connected to a given atom, and multiplies 
+        their molar mass by the order of the bond between them"""
+    #used for rearraning atoms, to get canonical strings
         return sum([bond.getOther(self).molarMass*bond.electrons/2
-            for bond in self.electronDomains if isinstance(bond,Bond)])
+    +bond.electrons for bond in self.electronDomains if isinstance(bond,Bond)])
     
+
     def hasOctet(self):
         """returns true if an atom has an octet, False if its over an octet
         and None if the octet is incomplete"""
-        electronSum=self.getElectrons()
+        electronSum=self.currentElectrons
+        if self.canExpandOctet:
+            if electronSum<8:
+                return None
+            else:
+                return len(self.electronDomains)<=6 and electronSum<=16
+        #all edge cases
         #hydrogen can only have 1 single bond
         if self.symbol=="H":
+            if not self.electronDomains:
+                return None
             if (self.countDomains("-")>1 or self.countDomains(":") or 
-   self.countDomains("=") or self.countDomains("#")):
+   self.countDomains("=") or self.countDomains("≡")):
                 return False
             if self.countDomains("-")==1:
                 return True
-            return None
         #Be only takes 2 single bonds
         if self.symbol=="Be":
             if (self.countDomains(":") or self.countDomains("=") or 
-                self.countDomains("#") or self.countDomains("-")>2):
+                self.countDomains("≡") or self.countDomains("-")>2):
                 return False
             if self.countDomains("-")==2:
                 return True
@@ -104,7 +134,7 @@ class Atom:
         #Boron and Al each take 3 single bonds
         if self.symbol=="B" or self.symbol=="Al":
             if (self.countDomains(":") or self.countDomains("=") or 
-                self.countDomains("#") or self.countDomains("-")>3):
+                self.countDomains("≡") or self.countDomains("-")>3):
                 return False
             if self.countDomains("-")==3:
                 return True
@@ -113,69 +143,75 @@ class Atom:
             return True
         if electronSum<8:
             return None
+
         return False
     
     def addLonePair(self):
+        self.numModifications+=1
+        self.currentElectrons+=2
         self.electronDomains.append(":")
         return True
     
     def removeLonePair(self):
         #checks if atom has a lone pair
-        if ":" in self.electronDomains:
+        self.numModifications-=1
+        try:
             self.electronDomains.remove(":")
+            self.currentElectrons-=2
             return True
-        return False
-    
-    def bondTo(self,other,type):
-        """creates a new bond object between self and other"""
+        except:
+            return False
+       
+    def sigmaBond(self,other):
+        """single bonds self and other"""
         if self is other:
             #no bonding to same atoms
-            return False
-        #no bonding non-atoms
-        if not isinstance(other,Atom):
-            return False
+            return None
         """H can only have 1 single bond, so it should have nothing attached
         if it wants to bond"""
-        if self.symbol=="H":
-            if self.electronDomains:
-                return False
-        newBond=Bond(type,self,other)
-
+        if self.symbol=="H" and self.electronDomains:
+            return None
+        newBond=Bond("-",self,other)
         for domain in self.electronDomains:
            #two atoms can only have 1 bond between them
             if isinstance(domain,Bond) and domain.sameAtoms(newBond):
-                return False
-
+                return None
         self.electronDomains.append(newBond)
         other.electronDomains.append(newBond)
+        other.currentElectrons+=2
+        self.currentElectrons+=2
+        return newBond
+    
+    def unBond(self,other,bond):
+        self.currentElectrons-=2
+        other.currentElectrons-=2
+        self.electronDomains.remove(bond)
+        other.electronDomains.remove(bond)
         return True
-    
-    def unBond(self,other):
-        for domain in self.electronDomains:
-            if (isinstance(domain,Bond) and
-                ((domain.atomOne is self and domain.atomTwo is other) or 
-                 (domain.atomOne is other and domain.atomTwo is self))):
-                     self.electronDomains.remove(domain)
-                     other.electronDomains.remove(domain)
-                     return True
-        return False
-    
-    def removeLonePair(self):
-        for domain in self.electronDomains:
-            if domain==":":
-                self.electronDomains.remove(":")
-                return True
-        return False
-    
+        
     def getFormalCharge(self):
-        #atoms with incomplete octets can lower their formal charge in the future
-        #so don't penalize
-        if not self.hasOctet():
-            return 0
+        """returns formal charge of an atom"""
         valence=self.valenceElectrons
         for domain in self.electronDomains:
             valence-=(2 if domain==":" else domain.electrons/2)
         return valence
+    
+    def atomToStr(self,polarityCheck=False):
+        returnStr=self.symbol+"|"
+        for domain in self.electronDomains:
+            if isinstance(domain,Bond):
+                #for checking polarity, we don't care about bond type
+                #because of resonance
+                if polarityCheck:
+                    returnStr+="-"+domain.getOther(self).symbol
+                else:
+                    returnStr+=domain.type+domain.getOther(self).symbol
+            elif not polarityCheck:
+                #for checking polarity, we don't care about lone pairs
+                #because of resonance
+                returnStr+=":"
+        return returnStr
+
     
     def rearrange(self):
         """rearrages atom's bonds and lp's for hashing"""
@@ -183,21 +219,79 @@ class Atom:
         bonds.sort(key=lambda bond: ((bond.electrons,
                 bond.getOther(self).atomicNumber)),reverse=True)
         lone_pairs = [lp for lp in self.electronDomains if isinstance(lp, str)]
-        self.electronDomains = bonds + lone_pairs
-        return True
+        newDomains = bonds + lone_pairs
+        self.electronDomains=newDomains
     
     def addUntilOctet(self):
-        """adds lone pairs to an atom until it has octet"""
+        """adds lone pairs to an atom until it has octet. returns 
+        how many lps it added"""
        #these atoms dont accept lps
         if self.symbol in {"Be","B","H","Al"}:
-            return False
-        
-        for _ in range(4-self.countDomains("-")):
+            return 0
+        for numPairs in range((8-self.currentElectrons)//2):
             self.addLonePair()
-
-        return True
+        try:
+           return numPairs*2
+        except:
+            return 0
         
+    def isBonded(self,atom):
+        """returns true if the 2 atoms are bonded"""
+        for domain in self.electronDomains:
+            if not isinstance(domain,Bond):
+                continue
+            if ((domain.atomOne is self and domain.atomTwo is atom) or 
+                (domain.atomOne is atom and domain.atomTwo is self)):
+                return True
+        return False
         
+    
+    #gets information like bond angles
+    def getHybirdization(self):
+        """returns hybirdization of self"""
+        if len(self.electronDomains)==1:
+            return "None"
+        return "s"+"p"+str(len(self.electronDomains)-1)
+    
+    def getVSEPR(self):
+        """returns vsepr geometry followed by bond angles """
+        numDomains=len(self.electronDomains)
+        numLPs=self.countDomains(":")
+        if numDomains==2:
+            return ["linear","180"]
+        if numDomains==3:
+            if numLPs:
+                return ["bent","<120"]
+            else:
+                return ["trigonal planar","120"]
+        if numDomains==4:
+            if numLPs==2:
+                return ["bent","<109"]
+            if numLPs==1:
+                return ["trigonal pyrimidal","<109"]
+            else:
+                return ["tetrahedral","109"]
+        if numDomains==5:
+            if numLPs==3:
+                return ["linear","180"]
+            if numLPs==2:
+                return ["T-Shaped","<90"]
+            if numLPs==1:
+                return ["SeeSaw","<120, <90"]
+            else:
+                return ["trigonal bipyramidal","120, 90"]
+        if numDomains==6:
+            if numLPs==4:
+                return ["linear","180"]
+            if numLPs==3:
+                return ["T-Shaped","<90"]
+            if numLPs==2:
+                return ["Square Planar","90"]
+            if numLPs==1:
+                return ["square pyramidal","<90"]
+            else:
+                return ["octahedral","90"]
+        return ["None","None"]
     def __repr__(self):
         return self.symbol
     def __hash__(self):
@@ -206,19 +300,16 @@ class Atom:
         return self.symbol
     def __eq__(self,other):
         return self is other
-    
+
 class Bond:
      def __init__(self,type,atomOne,atomTwo):
           self.type=type
-          if self.type=="-":
-               self.electrons=2
-          elif self.type=="=":
-               self.electrons=4
-          elif self.type=="#":
-               self.electrons=6
+          self.electrons=2 if type=="-" else (4 if type=="=" else 6)
           self.atomOne=atomOne
           self.atomTwo=atomTwo
 
+          #for backtracking efficiency
+          self.numModifications=0
      
      def sameAtoms(self,other):
          """Returns true if the atoms attached to each bond are the same atom"""
@@ -242,22 +333,40 @@ selfAtomTwo==other[0]))
          
      
      def addPi(self):
+         if self.type=="≡":
+             return False
+         atomOne=self.atomOne
+         atomTwo=self.atomTwo
+         self.numModifications+=1
          if self.type=="-":
+             atomOne.currentElectrons+=2
+             atomTwo.currentElectrons+=2
              self.type="="
              self.electrons=4
              return True
          if self.type=="=":
-             self.type="#"
+             atomOne.currentElectrons+=2
+             atomTwo.currentElectrons+=2
+             self.type="≡"
              self.electrons=6
              return True
          return False
      
      def removePi(self):
-         if self.type=="#":
+         if self.type=="-":
+             return False
+         atomOne=self.atomOne
+         atomTwo=self.atomTwo
+         self.numModifications-=1
+         if self.type=="≡":
+             atomOne.currentElectrons-=2
+             atomTwo.currentElectrons-=2
              self.type="="
              self.electrons=4
              return True
          elif self.type=="=":
+             atomOne.currentElectrons-=2
+             atomTwo.currentElectrons-=2
              self.type="-"
              self.electrons=2
              return True
@@ -277,14 +386,19 @@ selfAtomTwo==other[0]))
                  self.type+self.atomTwo.symbol)
        
      def __repr__(self):
-         return (self.atomOne.symbol+
-                 self.type+self.atomTwo.symbol)
+         return (self.atomOne.symbol+self.type+self.atomTwo.symbol)
      
      def __eq__(self,other):
          return other is self
      
      def __hash__(self):
         return hash(id(self))
+
+
+
+
+
+     
 
 
 
