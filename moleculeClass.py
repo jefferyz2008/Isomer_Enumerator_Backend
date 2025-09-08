@@ -5,6 +5,11 @@ from collections import deque
 from specialDict import*
 from queue import PriorityQueue
 class Molecule:
+     __slots__ = [
+        "atoms", "charge", "formula", "numElectrons", "currentElectrons",
+        "formalChargeSum", "bondElectrons", "idealBondElectrons",
+        "octetDict", "numAtoms", "expandedOctet"
+    ]
      def __init__(self,atoms,charge,formula):
           #putting atoms with higher bonding capacity first
           #to make backtracking more efficient
@@ -199,25 +204,36 @@ class Molecule:
                      score+=1/2
          if isComplete:
             score+= self.getFormalChargeSharing(self.sumFormalCharges())
-         #   score+=self.scoreElectronegativity()
+          #  score+=self.punishFormalChargesElectroneg()
          return score
      
-     def scoreElectronegativity(self):
-         """scores molecule based on how formal charges are distributed 
-         with respect to electronegativity"""
-         electronegList=list({atom.electroNegativity for atom in self.atoms})
-         electronegList.sort()
-         numAtoms=len(list({atom.symbol for atom in self.atoms}))
-         penalty=0
-         for atom in self.atoms:
-             formalCharge=atom.getFormalCharge()
-             if formalCharge>0:
-                 if atom.electroNegativity>2.4:
-                     penalty+=10
-           #  elif formalCharge<0:
-               #  if atom.electroNegativity
-         return penalty
-             
+     
+     
+     def punishFormalChargesElectroneg(self):
+        """
+        Penalizes molecules for chemically unfavorable formal charges:
+        - Negative FC on less electronegative atoms
+        - Positive FC on highly electronegative atoms
+        Returns an integer penalty score; higher = worse.
+        """
+        penalty = 0
+        maxEN = 4.0  # Fluorine as reference max electronegativity
+
+        for atom in self.atoms:
+            fc = atom.getFormalCharge()
+            en = atom.electroNegativity
+
+            if fc < 0:
+                # Negative FC on low EN atoms is bad
+                # Low EN atoms have more penalty: (maxEN - EN)
+                penalty += int((maxEN - en) * abs(fc) * 3)
+            elif fc > 0:
+                # Positive FC on high EN atoms is bad
+                # High EN atoms have more penalty: EN itself
+                penalty += int(en * abs(fc) * 3)
+
+        return penalty
+
          
      def getFormalChargeSharing(self,sumCharges):
          """returns a number indicating how well spread the formal charge is"""
@@ -235,23 +251,10 @@ class Molecule:
      def molToStr(self,polarityCheck=False):
          """turns a molecule into a string unique to that molecule"""
 
-         self.rearrange()
          atomList=self.sortAtoms()
          returnStr=""
          for atom in atomList:
-             returnStr+=atom.symbol+"|"
-             for domain in atom.electronDomains:
-                 if isinstance(domain,Bond):
-                     #for checking polarity, we don't care about bond type
-                     #because of resonance
-                     if polarityCheck:
-                         returnStr+="-"+domain.getOther(atom).symbol
-                     else:
-                        returnStr+=domain.type+domain.getOther(atom).symbol
-                 elif not polarityCheck:
-                     #for checking polarity, we don't care about lone pairs
-                     #because of resonance
-                     returnStr+=":"
+             returnStr+=atom.strAtom
          return returnStr
 
      def cloneMolecule(self):
@@ -278,6 +281,7 @@ class Molecule:
         newMolecule.formalChargeSum=self.formalChargeSum
         newMolecule.expandedOctet=self.expandedOctet
         newMolecule.currentElectrons=self.currentElectrons
+        newMolecule.bondElectrons=self.currentElectrons
         return newMolecule
   
      def addUntilOctet(self):
@@ -379,9 +383,29 @@ class Molecule:
                  if self.split(bond.atomOne,bond)==self.split(bond.atomTwo,bond):
                      return "non-polar"
              return "polar"
+     def countPi(self):
+         sum=0
+         bondList=self.getBondList()
+         for bond in bondList:
+             if bond.type=="=":
+                 sum+=1
+             elif bond.type=="≡":
+                 sum+=2
+         return sum
+     def countSigma(self):
+         return len(self.getBondList())
+     
+     def updateAllSurroundingSets(self):
+         for atom in self.atoms:
+             atom.updateSurroundingSet()
+
+
+         
+         
          
 ##########ALL THE FOLLOWING FUNCTIONS ARE DEDICATED TO ASSIGNING ATOMS POSITIONS
 #ON THE CANVAS
+
      def positionsToStr(self):
          #returns a string representing the positions of all the atoms
          returnStr=""
@@ -391,25 +415,96 @@ class Molecule:
              returnStr+=(atom.atomToStr()+"|"+str(atom.centerX)+","+
                          str(atom.centerY))
          return returnStr
+     
+     def findLowAtom(self):
+         lowest=float("inf")
+         for atom in self.atoms:
+             if atom.centerY<lowest:
+                 lowest=atom.centerY
+                 lowestAtom=atom
+         return lowestAtom
+     
+     def findTopAtom(self):
+        """Returns the atom with the smallest Y coordinate (top-most)"""
+        topAtom = self.atoms[0]
+        for atom in self.atoms:
+            if atom.centerY < topAtom.centerY:
+                topAtom = atom
+        return topAtom
+
+     def findLeftAtom(self):
+        """Returns the atom with the smallest X coordinate (left-most)"""
+        leftAtom = self.atoms[0]
+        for atom in self.atoms:
+            if atom.centerX < leftAtom.centerX:
+                leftAtom = atom
+        return leftAtom
+
+     def findRightAtom(self):
+        """Returns the atom with the largest X coordinate (right-most)"""
+        rightAtom = self.atoms[0]
+        for atom in self.atoms:
+            if atom.centerX > rightAtom.centerX:
+                rightAtom = atom
+        return rightAtom
+     
+     def findCenter(self):
+        """
+        Returns the approximate center of the molecule using extremal atoms:
+        - Top-most, left-most, and right-most atoms
+        """
+        topAtom = self.findTopAtom()
+        leftAtom = self.findLeftAtom()
+        rightAtom = self.findRightAtom()
+        lowestAtom = self.findLowAtom()
+
+        # Center X is midpoint between left-most and right-most atoms
+        centerX = (leftAtom.centerX + rightAtom.centerX) / 2
+        # Center Y is midpoint between top-most and lowest atom
+        centerY = (topAtom.centerY + lowestAtom.centerY) / 2
+
+        return (centerX, centerY)
+            
+     
+     def findCenterAtom(self):
+         """finds atom closest to the center"""
+         centerX,centerY=self.findCenter()
+         minDist=float('inf')
+         centerAtom=self.atoms[0]
+         for atom in self.atoms:
+             distance=getDistance(centerX,centerY,atom.centerX,atom.centerY)
+             if distance<minDist:
+                 minDist=distance
+                 centerAtom=atom
+         return centerAtom
+     
+     
+     def center(self):
+         """centers molecule to center of canvas"""
+         centerX,centerY=1200/2,600/2
+         centerAtom=self.findCenterAtom()
+         centerAtomX,centerAtomY=centerAtom.centerX,centerAtom.centerY
+         xDist=centerX-centerAtomX
+         yDist=centerY-centerAtomY
+         for atom in self.atoms:
+             atom.centerX+=xDist
+            
+         return True
+
+
+
+         
                  
              
 
-     def recursiveAssignPositions(self,width,height,positionsSet=set()):
-         if not positionsSet:
-            self.atoms[0].centerX=width/2
-            self.atoms[0].centerY=height/2
-         positionStr=self.positionsToStr()
-         if positionStr in positionsSet:
-             return self
-         positionsSet.add(positionStr)
-         #base case
-         if self.allHasPositions():
-             return self
+     def getPositionless(self):
+         allPositionless=[]
+         for atom in self.atoms:
+             if not (atom.centerX and atom.centerY):
+                 allPositionless.append(atom)
+         return allPositionless
          
-
-         
-     def assignPositions(self,width,height):#positionsList):
-        """assign's the best positions to an atom for drawing"""
+     def assignHorizontal(self,width,height):
         queue=deque()
         bondSet=set()
         self.atoms[0].centerX=width/2
@@ -420,7 +515,9 @@ class Molecule:
             current=atomTuple[1]
             predecessor=atomTuple[0]
             if predecessor:
-                for dX,dY in [(-75,0),(75,0),(0,-75),(0,75)]:
+                orderList=[(-75,0),(75,0)]
+                for dX,dY in orderList:
+
                     if not self.hasAtomThere(predecessor.centerX+dX,
                                              predecessor.centerY+dY):
                         current.centerX=predecessor.centerX+dX
@@ -434,6 +531,31 @@ class Molecule:
                 if isinstance(domain,Bond) and domain not in bondSet:
                     queue.append((current,domain.getOther(current)))
                     bondSet.add(domain)
+            
+         
+     def assignPositions(self,width,height):#positionsList):
+        """assign's the best positions to an atom for drawing"""
+        self.updateAllSurroundingSets()
+        self.assignHorizontal(width,height)
+        
+        atomsToAssign=self.getPositionless()
+        print(len(atomsToAssign))
+        for atom in atomsToAssign:
+            assignedPositions=False
+            for atom1 in atom.surroundingSet:
+                #if an atom around it has positions
+                if atom1.centerX and atom1.centerY:
+                    for dX,dY in [(0,-75),(0,75),(75,0),(-75,0)]:
+                        if self.hasAtomThere(atom1.centerX+dX,atom1.centerY+dY):
+                            continue
+                        assignedPositions=True
+                        atom.centerX=atom1.centerX+dX
+                        atom.centerY=atom1.centerY+dY
+                        break
+            if not assignedPositions and atom.symbol!="H":
+                atomsToAssign.append(atom)
+        self.center()
+
         return True
      
      def getLonePairs(self):
@@ -441,6 +563,7 @@ class Molecule:
          positions={}
          for atom in self.atoms:
              numLonePairs=atom.countDomains(":")
+             print(numLonePairs)
              if True:
                 addedLPs=0
                 for dX,dY in [(-75,0),(75,0),(0,-75),(0,75)]:
@@ -481,9 +604,6 @@ str(atom.centerY+dY/3)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
              if not (atom.centerX and atom.centerY):
                  return False 
          return True
-     
-     
-
              
          
      
