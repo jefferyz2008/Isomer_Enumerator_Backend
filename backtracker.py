@@ -15,7 +15,10 @@ def getSkeletalStructuresDFS(molecule,moleculeList=None,visited=None):
     if strMol in visited:
         return moleculeList
     visited.add(strMol)
-    isAllBondedOrCircular=molecule.isBondedOrCircular()
+    if molecule.bondElectrons/2>=molecule.numAtoms-1:
+       isAllBondedOrCircular=molecule.isBondedOrCircular()
+    else:
+        isAllBondedOrCircular=(False,False)
     #if it detects a cyclic molecule
     if isAllBondedOrCircular[1]:
         return moleculeList
@@ -36,19 +39,44 @@ def getSkeletalStructuresDFS(molecule,moleculeList=None,visited=None):
             if (atomTwo.electronDomains and moleculeList
                  and checkOverBonding(atomTwo)):
                 continue
+
+            oldStrOne=atomOne.strAtom
+            oldStrTwo=atomTwo.strAtom
+
             newBond=atomOne.sigmaBond(atomTwo)
+            molecule.bondElectrons+=2
+
+
             #don't continue if bond unsuccesful
             if not newBond:
                 continue
             else:
                molecule.currentElectrons+=2
+
+            #eliminates peroxides if applicable
+            if newBond and (newBond.sameTypeAtoms("O-O") and 
+                moleculeList):
+               atomOne.unBond(atomTwo,newBond)
+               molecule.currentElectrons-=2
+               atomOne.strAtom=oldStrOne
+               atomTwo.strAtom=oldStrTwo
+               continue
+
             #Both atoms not having an over octet means its valid
             if (newBond and atomOne.hasOctet()!=False 
                 and atomTwo.hasOctet()!=False):
+               atomOne.strAtom=atomOne.atomToStr()
+               atomTwo.strAtom=atomTwo.atomToStr()
                getSkeletalStructuresDFS(molecule,moleculeList,visited)
+
             if newBond:
                atomOne.unBond(atomTwo,newBond)
                molecule.currentElectrons-=2
+               molecule.bondElectrons-=2
+               atomOne.strAtom=oldStrOne
+               atomTwo.strAtom=oldStrTwo
+
+               
     return moleculeList
 
     
@@ -62,8 +90,8 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
         bondList=structure.getBondListNoH()
 
     #there can only be 1 perfect structure, so if there is, stop the search
-    if minScore[0]==0 and moleculeList:
-        return (moleculeList,minScore)
+    #if minScore[0]==0 and moleculeList:
+      #  return (moleculeList,minScore)
     
     lowestScore=minScore[0]
     currentScore=structure.formalChargeSum
@@ -103,8 +131,11 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
 
         atomOne=bond.atomOne
         atomTwo=bond.atomTwo
-        if octetDict[atomOne] or octetDict[atomTwo]:
+        if octetDict[atomOne] or octetDict[atomTwo] or atomOne in {"H"}:
             continue
+        oldStrOne=atomOne.strAtom
+        oldStrTwo=atomTwo.strAtom
+
         bond.addPi()
         structure.bondElectrons+=2
         structure.currentElectrons+=2
@@ -121,7 +152,9 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
             octetDict[atomTwo]=True
             formalChargeTwo=abs(atomTwo.getFormalCharge())
             structure.formalChargeSum+=formalChargeTwo
-
+        
+        atomOne.strAtom=atomOne.atomToStr()
+        atomTwo.strAtom=atomTwo.atomToStr()
         backtrackPiBondsLonePairs(structure,moleculeList,bondList,
                                   minScore,visited)
         if hasOctetOne:
@@ -133,6 +166,8 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
             structure.formalChargeSum-=formalChargeTwo
         
         bond.removePi()
+        atomOne.strAtom=oldStrOne
+        atomTwo.strAtom=oldStrTwo
         structure.bondElectrons-=2
         structure.currentElectrons-=2
     return (moleculeList,minScore)
@@ -162,13 +197,13 @@ def addLonePairs(structure,minScore): #takes in minscore for pruning
 
 
 
-
 #The following algorithms don't work as efficiently as this one
 
 def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
                                 minScore=[float('inf')],visited=set()):
     """given an all sigma bonded molecule with no lone pairs, adds pi bonds 
     and lp's until complete"""
+  #  prettyPrint(structure)
     if not bondList:
        #all bonds in the molecule except hydrogen, because we can't add pi
        #bonds to it
@@ -209,7 +244,10 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
         #except if its an expanded octet
         if octetDict[atom] and not atom.canExpandOctet:
             continue
+        #saves string state for backtracking
+        oldStr=atom.strAtom
         atom.addLonePair()
+
         structure.currentElectrons+=2
         atomHasOctet=atom.hasOctet()
         if atomHasOctet:
@@ -219,6 +257,8 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
         #hasOctet and hasEnoughElectrons 
         #will return None if it's octet isn't complete yet
         if atomHasOctet!=False and structure.hasEnoughElectrons()!=False:
+            atom.strAtom=atom.atomToStr(True)
+           #print("NEJFJNFIVEF") prettyPrint(structure)
             backtrackSkeletalStructure(structure,moleculeList,bondList
                                               ,atomList,minScore,visited)
         
@@ -229,11 +269,7 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
            structure.formalChargeSum-=atomFC
         atom.removeLonePair()
         structure.currentElectrons-=2
-
-    #checks for too many pi bonds
-  #  if structure.bondElectrons>=structure.idealBondElectrons:
-      #      return (moleculeList,minScore[0])
-
+        atom.strAtom=oldStr
     for bond in sorted(bondList, key=lambda b:(b.numModifications,
                         -1*min(b.atomOne.prefBonds,b.atomTwo.prefBonds))):
         if bond.type=="≡":
@@ -243,8 +279,14 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
         #we must make sure that none of the atoms have octets
         if ((octetDict[atomOne] and not atomOne.canExpandOctet) or 
             (octetDict[atomTwo] and not atomTwo.canExpandOctet)):
+            print("Hi")
             continue
-        bond.addPi()
+        #saves string states for backtracking
+        oldStrOne=atomOne.strAtom
+        oldStrTwo=atomTwo.strAtom
+        print("JFNVFEV")
+        assert(bond.addPi())
+        prettyPrint(structure)
         structure.currentElectrons+=2
         structure.bondElectrons+=2
         atomOneHasOctet=atomOne.hasOctet()
@@ -259,6 +301,8 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
             structure.formalChargeSum+=atomTwoFC
         if (atomOneHasOctet!=False and atomTwoHasOctet!=False and 
             structure.hasEnoughElectrons()!=False):
+            atomOne.strAtom=atomOne.atomToStr(True)
+            atomTwo.strAtom=atomTwo.atomToStr(True)
             backtrackSkeletalStructure(structure,moleculeList,
                                             bondList,atomList,minScore,visited)
 
@@ -274,14 +318,14 @@ def backtrackSkeletalStructure(structure,moleculeList,bondList,atomList,
         bond.removePi()
         structure.currentElectrons-=2
         structure.bondElectrons-=2
+        atomOne.strAtom=oldStrOne
+        atomTwo.strAtom=oldStrTwo
     
     return (moleculeList,minScore[0])
 
 
 
     
-
-
 
 
 
@@ -335,4 +379,3 @@ def backtrackSkeletalStructure2(structure,moleculeList,
         atomTwo.addLonePair()
     
     return moleculeList
-
