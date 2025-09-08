@@ -8,6 +8,7 @@ import time
 def getAllStructures(molecule):
     "takes all skeletal structures and finds solutions for them"
     moleculeList=getSkeletalStructuresDFS(molecule)
+    #prettyPrintList(moleculeList)
     print(len(moleculeList))
     validStructs=[]
     #default min score
@@ -19,7 +20,7 @@ def getAllStructures(molecule):
            validStructs+=result[0]
     return validStructs
 
-def testBacktrack(molecule):
+def getAllStructures2(molecule):
     moleculeList=getSkeletalStructuresDFS(molecule)
   #  prettyPrintList(moleculeList)
     print(len(moleculeList))
@@ -34,25 +35,23 @@ def testBacktrack(molecule):
   #  print(start-end)
     return completeList
         
-def getBestStructures(molecule):
+def getBestStructures(moleculeName):
     """sorts molecules based on score and returns a list of the lowest score
     molecules"""
     print("getting structure")
-    func=getAllStructures if molecule.expandedOctet else testBacktrack
-    #func=testBacktrack
-    #validStructures=getAllStructures(molecule)
-    validStructures2=func(molecule)
-    validStructures2.sort(key=lambda molecule: molecule.getScore())
-    allBestStructs=[molecule for molecule in validStructures2 if
-                     molecule.getScore()==validStructures2[0].getScore()]
+    molecule=parseMolecule(moleculeName)
+    for atom in molecule.atoms:
+        print(atom.symbol)
+    func=getAllStructures if molecule.expandedOctet else getAllStructures2
+
+    validStructures=func(molecule)
+    validStructures.sort(key=lambda molecule: molecule.getScore())
+    allBestStructs=[molecule for molecule in validStructures if
+                     (molecule.getScore()==validStructures[0].getScore() and 
+                      molecule.getScore()<=40)]
     return allBestStructs
-   # return validStructures2
-   
-    return validStructures2
+
     return validStructures
-
-
-
 
 
 
