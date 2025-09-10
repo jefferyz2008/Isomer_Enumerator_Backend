@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Lewis AI</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
     body {
       font-family: Arial, sans-serif;
       display: flex;
@@ -57,8 +58,9 @@
   </style>
 </head>
 <body>
-
+  
   <h1>Enter Molecule Formula</h1>
+  <div>large molecules might take a very long time</div>
   <div id="instructions">Use ^ when representing a charge. For example, CO3^2-</div>
 
   <div id="controls">
@@ -67,87 +69,151 @@
     <button type="button" id="prevIsomer">Previous Isomer</button>
     <button type="button" id="nextIsomer">Next Isomer</button>
   </div>
-
-  <canvas id="myCanvas" width="850" height="450"></canvas>
+  
+  <canvas id="myCanvas" width="1200" height="800"></canvas>
 
   <script src="renderer.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const canvas = document.getElementById("myCanvas");
-      const ctx = canvas.getContext("2d");
-      const input = document.getElementById("moleculeInput");
-      const generateButton = document.getElementById("generate");
-      const next = document.getElementById("nextIsomer");
-      const prev = document.getElementById("prevIsomer");
+    function getMousePos(canvas,evt) {
+    const rect = canvas.getBoundingClientRect(); // canvas position on page
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    const input = document.getElementById("moleculeInput");
+    const generateButton = document.getElementById("generate");
+    const next = document.getElementById("nextIsomer");
+    const prev = document.getElementById("prevIsomer");
 
-      let currentIsomer = 0;
-      let currentMolecule = null;
+    //Draws help button
+    drawHelpButton(ctx);
 
-      async function fetchMolecules(formula) {
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/molecule?moleculeName=${encodeURIComponent(formula)}`);
-          return await response.json();
-        } catch (err) {
-          console.error("Failed to fetch bonds:", err);
-        }
+    let currentIsomer = 0;
+    let currentMolecule = null;
+    let infoPanel=null;
+    let typeInfoPanel="molecule"
+
+    async function fetchMolecules(formula) {
+      try {
+        const response = await fetch(`https://lewis-structure-generator-production.up.railway.app/molecule?moleculeName=${encodeURIComponent(formula)}`);
+        return await response.json();
+      } catch (err) {
+        console.error("Failed to fetch bonds:", err);
       }
+    }
 
-      async function drawMolecule(name) {
-        if (!name){
-          return
-        }
-        ctx.font = "40px Arial";
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillText("thinking...", 200, 200);
-
-        currentMolecule = await fetchMolecules(name);
-        const numIsomers = Object.values(currentMolecule).length;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawAllAtoms(currentMolecule["0"]["atoms"], ctx);
-        drawAllBonds(currentMolecule["0"]["bonds"], ctx);
-        drawAllBonds(currentMolecule["0"]["lonePairs"], ctx);
-
-        if (numIsomers) {
-          ctx.fillText(`Isomer 1 out of ${numIsomers}`, 50, 50);
-        }
+    async function drawMolecule(name) {
+      if (!name){
+        return
       }
+      ctx.font = "40px 'JetBrains Mono'";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillText("thinking...", 200, 200);
 
-      function drawCurrentIsomer() {
-        if (!currentMolecule) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const numIsomers = Object.values(currentMolecule).length;
-        const isomerStr = currentIsomer.toString();
+      currentMolecule = await fetchMolecules(name);
 
-        drawAllAtoms(currentMolecule[isomerStr]["atoms"], ctx);
-        drawAllBonds(currentMolecule[isomerStr]["bonds"], ctx);
-        drawAllBonds(currentMolecule[isomerStr]["lonePairs"], ctx);
+      const numIsomers = Object.values(currentMolecule).length;
 
-        if (numIsomers) {
-          ctx.fillText(`Isomer ${currentIsomer + 1} out of ${numIsomers}`, 50, 50);
-        }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (numIsomers==0)
+      {
+        ctx.fillText(`You really suck. This isn't a valid molecule`, 50, 50);
+        return
       }
+      drawAllAtoms(currentMolecule["0"]["atoms"], ctx);
+      drawAllBonds(currentMolecule["0"]["bonds"], ctx);
+      drawAllBonds(currentMolecule["0"]["lonePairs"], ctx);
+      infoPanel=drawInfo(currentMolecule["0"]["molInfo"],ctx)
+      if (numIsomers) {
+        ctx.fillText(`Isomer 1 out of ${numIsomers}`, 50, 50);
+      }
+    }
 
-      generateButton.addEventListener("click", () => {
-        currentIsomer = 0;
-        drawMolecule(input.value);
-      });
+    function drawCurrentIsomer() {
+      if (!currentMolecule) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const numIsomers = Object.values(currentMolecule).length;
+      const isomerStr = currentIsomer.toString();
 
-      next.addEventListener("click", () => {
-        if (!currentMolecule) return;
-        const numIsomers = Object.values(currentMolecule).length;
-        currentIsomer = (currentIsomer + 1) % numIsomers;
-        drawCurrentIsomer();
-      });
+      drawAllAtoms(currentMolecule[isomerStr]["atoms"], ctx);
+      drawAllBonds(currentMolecule[isomerStr]["bonds"], ctx);
+      drawAllBonds(currentMolecule[isomerStr]["lonePairs"], ctx);
+      infoPanel=drawInfo(currentMolecule[isomerStr]["molInfo"],ctx)
+      typeInfoPanel="molecule";
+      if (numIsomers) {
+        ctx.fillText(`Isomer ${currentIsomer + 1} out of ${numIsomers}`, 50, 50);
+      }
+    }
 
-      prev.addEventListener("click", () => {
-        if (!currentMolecule) return;
-        const numIsomers = Object.values(currentMolecule).length;
-        currentIsomer = (currentIsomer - 1 + numIsomers) % numIsomers;
-        drawCurrentIsomer();
-      });
+    generateButton.addEventListener("click", () => {
+      currentMolecule=null
+      currentIsomer = 0;
+      drawMolecule(input.value);
+    });
+
+    next.addEventListener("click", () => {
+      if (!currentMolecule) return;
+      const numIsomers = Object.values(currentMolecule).length;
+      currentIsomer = (currentIsomer + 1) % numIsomers;
+      drawCurrentIsomer();
+    });
+
+    prev.addEventListener("click", () => {
+      if (!currentMolecule) return;
+      const numIsomers = Object.values(currentMolecule).length;
+      currentIsomer = (currentIsomer - 1 + numIsomers) % numIsomers;
+      drawCurrentIsomer();
+    });
+
+    canvas.addEventListener("mousemove", (evt) => {
+      const pos = getMousePos(canvas, evt);
+      let xPos=pos.x;
+      let yPos=pos.y;
+      let displayedMolecule=currentMolecule[currentIsomer.toString()]
+      let isCoveringAtom=false
+      for (stringCoords in displayedMolecule["atomsInfo"])
+      {
+        let intCoords=strToIntCoords(stringCoords);
+        let xPosAtom=intCoords[0];
+        let yPosAtom=intCoords[1];
+        if (getDistance(xPos,yPos,xPosAtom,yPosAtom)<=30)
+        {
+          if (infoPanel)
+          {
+          clearInfoPanel(ctx,infoPanel)
+          }
+          infoPanel=drawInfo(displayedMolecule["atomsInfo"][stringCoords],ctx)
+          //highlights atom that info is displaying
+          ctx.save()
+          ctx.globalAlpha=0.0
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+          drawCircle(ctx, xPosAtom, yPosAtom, 30, "red");
+          ctx.restore();
+
+          typeInfoPanel="atom"
+          isCoveringAtom=true
+          break
+        }
+
+      }
+    if (!isCoveringAtom && infoPanel)
+    {
+      if (infoPanel && typeInfoPanel==="atom")
+      {
+          clearInfoPanel(ctx,infoPanel)
+      }
+      const isomerStr = currentIsomer.toString();
+
+      infoPanel=drawInfo(currentMolecule[isomerStr]["molInfo"],ctx)
+      typeInfoPanel="molecule"
+    }
+
     });
   </script>
 </body>
 </html>
+
 
