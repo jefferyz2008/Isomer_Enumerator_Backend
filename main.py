@@ -7,36 +7,48 @@ from backtracker import*
 from breadthFirst import*
 from moleculeSolver import*
 from tokenizer import*
+import asyncio
+import concurrent.futures
+executor = concurrent.futures.ProcessPoolExecutor()
 
-def getInfo(molecule):
-    pass
+def getMoleculeInfo(molecule):
+    """returns info about the molecule like polarity and molar mass"""
+    result={}
+    result["molar mass"] = str(round(molecule.getMolarMass(), 2)) + "g"
+    result["polarity"]=molecule.getPolarity()
+    result["σ bonds"]=str(molecule.countSigma())
+    result["π bonds"]=str(molecule.countPi())
+    return result
+
+def getAtomsInfo(molecule):
+    """gets info of ATOMS like VSEPR ,bond angles, and Hybirdization"""
+    result={}
+    for atom in molecule.atoms:
+        info={}
+        info["Hybirdization"]= atom.getHybirdization()
+        vsepr=atom.getVSEPR()
+        info["VSEPR"]=vsepr[0]
+        info["bond angles"]=vsepr[1]
+        fc=(int(atom.getFormalCharge()))
+        info["formal charge"]=str(fc) if fc<=0 else "+"+str(fc)
+        result[f"{atom.centerX},{atom.centerY}"]=info
+    return result
+
+
 
 def getMolecule(molecule):
     """gets all the positions of the atoms, bonds, and  lp's in the molecule"""
-    molecule.assignPositions(750,450)
+    molecule.assignPositions(1200,800)
     atoms = {f"{atom.centerX},{atom.centerY}": 
              atom.symbol for atom in molecule.atoms}
-    
-    bonds={}
-    for bond in molecule.getBondList():
-        atomOne=bond.atomOne
-        atomTwo=bond.atomTwo
-
-        #type of the bond and - if it is horizontal or | if it is vertical
-        typeAndOrientation=bond.type+("|" if 
-                            atomOne.centerX==atomTwo.centerX else "-")
-        
-        bonds[str((atomOne.centerX+atomTwo.centerX)/2)+","
-              +str((atomOne.centerY+atomTwo.centerY)/2)]=typeAndOrientation
+    bonds=molecule.assignBonds()
     lonePairs=molecule.getLonePairs()
-    return {"atoms": atoms, "bonds": bonds,"lonePairs":lonePairs}
+    atomsInfo=getAtomsInfo(molecule)
+    molInfo=getMoleculeInfo(molecule)
+    return {"atoms": atoms, "bonds": bonds,"lonePairs":lonePairs,
+            "atomsInfo":atomsInfo,"molInfo":molInfo}
 
 api=FastAPI()
-
-@api.get("/")
-def root():
-    return {"msg": "Electron API is running"}
-    
 # allow requests from Electron (localhost)
 api.add_middleware(
     CORSMiddleware,
@@ -47,13 +59,17 @@ api.add_middleware(
 
 
 @api.get("/molecule")
-def getAllMolecules(moleculeName):
+async def getAllMolecules(moleculeName:str):
     result={}
-    moleculeList=getBestStructures(tokenizeMolecule(moleculeName))
+    try:
+       moleculeList=await asyncio.to_thread(getBestStructures,moleculeName)
+    except:
+        return {}
     for index in range(len(moleculeList)):
         result[str(index)]=getMolecule(moleculeList[index])
     print(result)
     return result
+
 
 
 
