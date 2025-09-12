@@ -97,7 +97,7 @@
 
     async function fetchMolecules(formula) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/molecule?moleculeName=${encodeURIComponent(formula)}`);
+        const response = await fetch(`lewis-structure-generator-production.up.railway.app/molecule?moleculeName=${encodeURIComponent(formula)}`);
         return await response.json();
       } catch (err) {
         console.error("Failed to fetch bonds:", err);
