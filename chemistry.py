@@ -1,4 +1,5 @@
 """atom and bond classes and methods"""
+from helperFunctions import*
 from collections import deque
 class Atom:
     
@@ -267,6 +268,7 @@ class Atom:
         return False
     
     def updateSurroundingSet(self):
+        """updates surroundings of all atoms"""
         returnSet=set()
         for bond in self.electronDomains:
             if not isinstance(bond,Bond):
@@ -274,11 +276,33 @@ class Atom:
             returnSet.add(bond.getOther(self))
         self.surroundingSet=returnSet
     
-    def distanceFromAssignedAtom(self):
+    def nearestAssignedAtom(self):
+        """nearest atom with a position"""
         queue=deque()
-        bonds={}
-        for domain in self.electronDomains:
-            queue.add(domain)
+        queue.append(self)
+        bondSet=set()
+        while queue:
+            current=queue.popleft()
+            if current.centerX and current.centerY:
+                return current
+            for domain in current.electronDomains:
+                if domain in bondSet or domain==":":
+                    continue
+                bondSet.add(domain)   
+                queue.append(domain.getOther(current))
+        assert(1==0)
+    
+    def averageDistance(self,atomList):
+        """returns distance between atom and all atoms in the list"""
+        distSum=0
+        numAtoms=0
+        for atom in atomList:
+            if not (atom.centerX and atom.centerY):
+                continue
+            distSum+=getDistance(self.centerX,self.centerY,
+                                 atom.centerX,atom.centerY)
+            numAtoms+=1
+        return distSum/numAtoms if numAtoms else 0
         
 
 
@@ -427,6 +451,39 @@ selfAtomTwo==other[0]))
              return False
          return atomOne_ if atom is atomTwo_ else atomTwo_
      
+     def getFrontier(self,atom):
+         """returns all atoms in the molecule accessible by the bond on the 
+         side of the atom"""
+         queue=deque()
+         queue.append(atom)
+         bondSet=set()
+         bondSet.add(self)
+         visited=set()
+         while queue:
+             current=queue.pop()
+             visited.add(current)
+             for domain in current.electronDomains:
+                 if not isinstance(domain,Bond) or domain in bondSet:
+                     continue
+                 queue.append(domain.getOther(current))
+         return visited
+     def extend(self,atom):
+         """extends length of bond in the direction of the atom"""
+         assert(atom is self.atomOne or atom is self.atomTwo)
+         #if dX, expand in the right direction. if dY, expand in up/down direction
+         dX=self.atomOne.centerX-self.atomTwo.centerX
+         dY=self.atomOne.centerY-self.atomTwo.centerY
+         if dX:
+             #check to expand right or left
+             pass
+         atoms=self.getFrontier(atom)
+         for item in atoms:
+             pass
+             
+             
+
+
+
 
      def __str__(self):
          return (self.atomOne.symbol+
@@ -445,6 +502,7 @@ selfAtomTwo==other[0]))
 
 
 
+     
 
 
 
