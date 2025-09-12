@@ -479,17 +479,19 @@ class Molecule:
          return centerAtom
      
      
-     def center(self):
+     def center(self,width,height):
          """centers molecule to center of canvas"""
-         centerX,centerY=1200/2,600/2
+         centerX,centerY=width/2,height/2
          centerAtom=self.findCenterAtom()
          centerAtomX,centerAtomY=centerAtom.centerX,centerAtom.centerY
          xDist=centerX-centerAtomX
          yDist=centerY-centerAtomY
          for atom in self.atoms:
              atom.centerX+=xDist
-            
          return True
+     
+         
+     
 
 
 
@@ -515,7 +517,7 @@ class Molecule:
             current=atomTuple[1]
             predecessor=atomTuple[0]
             if predecessor:
-                orderList=[(-75,0),(75,0)]
+                orderList=[(-65,0),(65,0)]
                 for dX,dY in orderList:
 
                     if not self.hasAtomThere(predecessor.centerX+dX,
@@ -537,26 +539,45 @@ class Molecule:
         """assign's the best positions to an atom for drawing"""
         self.updateAllSurroundingSets()
         self.assignHorizontal(width,height)
-        
+        #assign vertical positions to atoms
         atomsToAssign=self.getPositionless()
-        print(len(atomsToAssign))
+        atomsToAssign.sort(key=lambda atom: atom.nearestAssignedAtom().centerX)
+        atomList=atomsToAssign+[]
         for atom in atomsToAssign:
             assignedPositions=False
             for atom1 in atom.surroundingSet:
                 #if an atom around it has positions
                 if atom1.centerX and atom1.centerY:
-                    for dX,dY in [(0,-75),(0,75),(75,0),(-75,0)]:
+                    #ATOM 1 HAS POSITIONS
+                    maxDisplaced=(0,0)
+                    maxDist=-1*float("inf")
+                    for dX,dY in [(0,65), (0, -65), (65, 0), (-65, 0)]:
                         if self.hasAtomThere(atom1.centerX+dX,atom1.centerY+dY):
                             continue
-                        assignedPositions=True
+                        if maxDisplaced==(0,0):
+                            maxDisplaced=(dX,dY)
                         atom.centerX=atom1.centerX+dX
                         atom.centerY=atom1.centerY+dY
-                        break
-            if not assignedPositions and atom.symbol!="H":
+                        distance=atom.averageDistance(self.atoms)
+                        if distance>=maxDist:
+                            maxDist=distance
+                            maxDisplaced=(dX,dY)
+                        atom.centerX=0
+                        atom.centerY=0
+                    if maxDisplaced!=(0,0):
+                      atom.centerX=atom1.centerX+maxDisplaced[0]
+                      atom.centerY=atom1.centerY+maxDisplaced[1]       
+                    assignedPositions=True
+            if not assignedPositions:# and atom.symbol!="H":
+                print("JJJJJ")
                 atomsToAssign.append(atom)
-        self.center()
+        self.center(width,height)
 
         return True
+     def extendBonds(self):
+         """makes longer bonds if the space isn't enough"""
+
+
      
      def getLonePairs(self):
          """assigns positions to lone pairs"""
@@ -604,9 +625,9 @@ str(atom.centerY+dY/3)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
              if not (atom.centerX and atom.centerY):
                  return False 
          return True
-             
-         
      
+     
+
      
 
 
