@@ -38,7 +38,7 @@ def getAtomsInfo(molecule):
 
 def getMolecule(molecule):
     """gets all the positions of the atoms, bonds, and  lp's in the molecule"""
-    molecule.assignPositions(1200,800)
+    molecule.assignPositions(1000,600)
     atoms = {f"{atom.centerX},{atom.centerY}": 
              atom.symbol for atom in molecule.atoms}
     bonds=molecule.assignBonds()
@@ -76,3 +76,13 @@ async def getAllMolecules(moleculeName:str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(api, host="127.0.0.1", port=8000, reload=False)
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+# Serve static files
+api.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Serve index.html at root
+@api.get("/")
+async def serve_index():
+    return FileResponse("frontend/index.html")
