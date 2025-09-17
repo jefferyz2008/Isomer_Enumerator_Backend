@@ -73,13 +73,56 @@ def parseAtoms(name):
     
 
 def parseMolecule(name):
-        atomList=parseAtoms(name)
+        commonNames={
+    "hydrochloric acid": "HCl",
+    "ammonia": "NH3",
+    "water": "H2O",
+    "carbon dioxide": "CO2",
+    "carbon monoxide": "CO",
+    "methane": "CH4",
+    "ethane": "C2H6",
+    "propane": "C3H8",
+    "butane": "C4H10",
+    "ethene": "C2H4",
+    "propene": "C3H6",
+    "ethyne": "C2H2",
+    "formaldehyde": "CH2O",
+    "methanol": "CH3OH",
+    "ethanol": "C2H5OH",
+    "glucose": "C6H12O6",
+    "ozone": "O3",
+    "hydrogen": "H2",
+    "nitrogen": "N2",
+    "oxygen": "O2",
+    "hydrogen sulfide": "H2S",
+    "nitric oxide": "NO",
+    "nitrogen dioxide": "NO2",
+    "sulfur dioxide": "SO2",
+    "hydrogen cyanide": "HCN",
+    "formic acid": "HCOOH",
+    "acetic acid": "CH3COOH",
+    "malic acid" :"C4H6O5",
+    "maleic acid": "C4H4O4",
+    "nitric acid":"HNO3",
+    "hydrogen peroxide":"H2O2",
+    "tartaric acid":"C4H6O6"
+
+}
+        if name in commonNames:
+            atomList=parseAtoms(commonNames[name])
+        else:
+            atomList=parseAtoms(name)
         ###gets the charge
         if "^" in name:
             if "+"==name[-1]:
                 charge=(1 if name[-2]=="^" else int(name[-2]))
             if "-"==name[-1]:
                 charge=(-1 if name[-2]=="^" else -1*int(name[-2]))
+            if charge>3:
+                raise ValueError("charge too high")
+            if charge<-4:
+                raise ValueError("charge too low")
+            
         else:
             charge=0
         newMolecule=Molecule(atomList,charge,name)
@@ -87,6 +130,8 @@ def parseMolecule(name):
            raise ValueError("Molecule has odd number of electrons")
         return newMolecule
     
+
+
 
 
 
