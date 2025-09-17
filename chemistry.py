@@ -7,7 +7,8 @@ class Atom:
         "symbol", "electronDomains", "mol", "molarMass", "valenceElectrons",
         "prefBonds", "atomicNumber", "canExpandOctet", "electroNegativity",
         "currentElectrons", "octetElectrons",
-        "centerX", "centerY","strAtom","surroundingSet"
+        "centerX", "centerY","strAtom","surroundingSet","alreadyChecked",
+        "predecessor"
     ]
     def __init__(self,symbol):
         self.symbol=symbol
@@ -61,6 +62,12 @@ class Atom:
         #only for indicating coordinates for drawing
         self.centerX=0
         self.centerY=0
+
+        self.alreadyChecked=False
+        
+
+        #atom that this atom uses to get a position
+        self.predecessor=None
 
 
 
@@ -276,6 +283,13 @@ class Atom:
             returnSet.add(bond.getOther(self))
         self.surroundingSet=returnSet
     
+    def getAdjacentAtom(self):
+        """adjacent atom with a position"""
+        for domain in self.electronDomains:
+            if (isinstance(domain,Bond) and domain.getOther(self).centerX and 
+                domain.getOther(self).centerY):
+                return domain.getOther(self)
+        return None
     def nearestAssignedAtom(self):
         """nearest atom with a position"""
         queue=deque()
@@ -292,6 +306,8 @@ class Atom:
                 queue.append(domain.getOther(current))
         assert(1==0)
     
+
+    
     def averageDistance(self,atomList):
         """returns distance between atom and all atoms in the list"""
         distSum=0
@@ -303,6 +319,9 @@ class Atom:
                                  atom.centerX,atom.centerY)
             numAtoms+=1
         return distSum/numAtoms if numAtoms else 0
+    
+    def isAssigned(self):
+        return self.centerX and self.centerY
         
 
 
@@ -359,6 +378,35 @@ class Atom:
             else:
                 return ["octahedral","90°"]
         return ["N/A","N/A"]
+    
+    def getRingDict(self):
+         """gets a ring of atoms, starting with this atom"""
+         predDict={}
+         bondSet=set()
+         queue=deque()
+         visited=set()
+         queue.append(self)
+         while queue:
+             current=queue.popleft()
+             visited.add(current)
+             for domain in current.electronDomains:
+                 if domain==":":
+                    continue
+                 atomOne=domain.atomOne
+                 atomTwo=domain.atomTwo
+                 if isinstance(domain,Bond):
+                     if domain in bondSet:
+                         continue
+                     bondSet.add(domain)
+                     if (not (current is atomOne)):
+                        queue.append(atomOne)
+                        predDict[atomOne]=current
+                     else: 
+                        queue.append(atomTwo)
+                        predDict[atomTwo]=current
+         return predDict
+    
+
     def __repr__(self):
         return self.symbol
     def __hash__(self):
@@ -467,6 +515,7 @@ selfAtomTwo==other[0]))
                      continue
                  queue.append(domain.getOther(current))
          return visited
+     
      def extend(self,atom):
          """extends length of bond in the direction of the atom"""
          assert(atom is self.atomOne or atom is self.atomTwo)
@@ -479,11 +528,7 @@ selfAtomTwo==other[0]))
          atoms=self.getFrontier(atom)
          for item in atoms:
              pass
-             
-             
-
-
-
+         
 
      def __str__(self):
          return (self.atomOne.symbol+
@@ -499,6 +544,10 @@ selfAtomTwo==other[0]))
         return hash(id(self))
 
 
+
+
+
+     
 
 
 
