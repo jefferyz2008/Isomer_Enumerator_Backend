@@ -40,8 +40,6 @@ def getBestStructures(moleculeName):
     molecules"""
     print("getting structure")
     molecule=parseMolecule(moleculeName)
-    for atom in molecule.atoms:
-        print(atom.symbol)
     func=getAllStructures if molecule.expandedOctet else getAllStructures2
 
     validStructures=func(molecule)
@@ -50,10 +48,6 @@ def getBestStructures(moleculeName):
                      (molecule.getScore()==validStructures[0].getScore() and 
                       molecule.getScore()<=40)]
     return allBestStructs
-
-    return validStructures
-
-
 
            
                
