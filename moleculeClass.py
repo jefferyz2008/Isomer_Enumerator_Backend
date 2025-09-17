@@ -134,6 +134,8 @@ class Molecule:
             visited.add(current)
 
             for domain in current.electronDomains:
+                if domain==":":
+                    continue
                 atomOne=domain.atomOne
                 atomTwo=domain.atomTwo
                 if isinstance(domain,Bond):
@@ -324,11 +326,23 @@ class Molecule:
              if isinstance(domain,Bond):
                  visited.add(domain.getOther(centralAtom))
          return len(visited)==len(self.atoms)
-                 
+     
+     def maxBonds(self):
+         """returns the number of bonds the atom with the most amount of bonds
+         has"""
+         maxBonds=-1*float('inf')
+         for atom in self.atoms:
+             if atom.countDomains("bond")>maxBonds:
+                 maxBonds=atom.countDomains("bond")
+         return maxBonds
+             
+
 
      def split(self,atom,bond):
          """returns a 'molecule' reprsenting the frontier of the atom with 
          respect to the given bond. Used for determing polarity"""
+
+        #in the direction of that bond
          bondSet=set()
          bondSet.add(bond)
          queue=deque()
@@ -343,6 +357,29 @@ class Molecule:
                      queue.append(domain.getOther(current))
          newMolecule=Molecule(allAtoms,0,"")
          return newMolecule.molToStr(True)
+     
+     def splitOtherDirection(self,atom,atom2):
+         """gets frontier of molecule in the opposite direction of the atome"""
+         if not atom2:
+             return Molecule([],0,"")
+         bondSet=set()
+         queue=deque()
+         for bond in atom.electronDomains:
+             if bond==":":
+                 continue
+             if not bond.getOther(atom) is atom2:
+                 bondSet.add(bond)
+                 queue.append(bond.getOther(atom))
+         allAtoms=[]
+         while queue:
+             current=queue.popleft()
+             allAtoms.append(current)
+             for domain in current.electronDomains:
+                 if isinstance(domain,Bond) and domain not in bondSet:
+                     bondSet.add(domain)
+                     queue.append(domain.getOther(current))
+         newMolecule=Molecule(allAtoms,0,"")
+         return newMolecule
     
      def getPolarity(self):
          """returns polar if molecule is polar nonpolar otherwise"""
@@ -383,6 +420,7 @@ class Molecule:
                  if self.split(bond.atomOne,bond)==self.split(bond.atomTwo,bond):
                      return "non-polar"
              return "polar"
+         
      def countPi(self):
          sum=0
          bondList=self.getBondList()
@@ -398,6 +436,14 @@ class Molecule:
      def updateAllSurroundingSets(self):
          for atom in self.atoms:
              atom.updateSurroundingSet()
+     def getRing(self):
+         """gets all rings the molecule"""
+
+         #it's not a ring
+         if not self.isBondedOrCircular()[1]:
+             return False
+         
+
 
 
          
@@ -405,16 +451,15 @@ class Molecule:
          
 ##########ALL THE FOLLOWING FUNCTIONS ARE DEDICATED TO ASSIGNING ATOMS POSITIONS
 #ON THE CANVAS
-
-     def positionsToStr(self):
-         #returns a string representing the positions of all the atoms
-         returnStr=""
-         self.rearrange()
-         atomList=self.sortAtoms()
-         for atom in atomList:
-             returnStr+=(atom.atomToStr()+"|"+str(atom.centerX)+","+
-                         str(atom.centerY))
-         return returnStr
+     def getAverageDistance(self,x,y):
+         distSum=0
+         numAtoms=0
+         for atom in self.atoms:
+             if not (atom.centerX and atom.centerY):
+                 continue
+             distSum+=getDistance(x,y,atom.centerX,atom.centerY)
+             numAtoms+=1
+         return distSum/numAtoms
      
      def findLowAtom(self):
          lowest=float("inf")
@@ -490,22 +535,26 @@ class Molecule:
              atom.centerX+=xDist
          return True
      
-         
-     
-
-
-
-         
-                 
-             
-
      def getPositionless(self):
          allPositionless=[]
          for atom in self.atoms:
              if not (atom.centerX and atom.centerY):
                  allPositionless.append(atom)
          return allPositionless
+     
+     def assignRing(self,width,height):
          
+         pass
+     
+     def updatePredecessors(self):
+         for atom in self.atoms:
+             if atom.predecessor:
+                 continue
+             adjacentAtom=atom.getAdjacentAtom()
+             if adjacentAtom:
+                 atom.predecessor=adjacentAtom
+         return True
+              
      def assignHorizontal(self,width,height):
         queue=deque()
         bondSet=set()
@@ -534,46 +583,69 @@ class Molecule:
                     queue.append((current,domain.getOther(current)))
                     bondSet.add(domain)
             
-         
+     def recursiveAssignPositions(self, positionless=None):
+        if positionless is None:
+            positionless = self.getPositionless()
+        if not positionless: 
+            return True
+        
+        #we do this because an atoms position is determined by the position 
+        #of an atom next to it
+        self.updatePredecessors()
+        positionless.sort(key=lambda atom: (len(self.splitOtherDirection(atom,
+                                                atom.predecessor).atoms)),reverse=True)
+        atom=positionless.pop(0)
+        predecessor=atom.predecessor
+        if not predecessor:
+            positionless.append(atom)
+            if self.recursiveAssignPositions(positionless):
+                    return True
+            else:
+                return False
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        
+        #coordinate which results in optimal placement
+        length=65
+        directions.sort(key=lambda direction: self.getAverageDistance
+                        (predecessor.centerX+length*direction[0],
+                            predecessor.centerY+length*direction[1]),reverse=True)
+        for direction in directions:
+            dx = length * direction[0]
+            dy = length * direction[1]
+            newX = predecessor.centerX + dx
+            newY = predecessor.centerY + dy
+            if self.hasAtomThere(newX, newY):
+                continue
+            atom.centerX=newX
+            atom.centerY=newY
+            if self.recursiveAssignPositions(positionless):
+                return True 
+            atom.centerX=0
+            atom.centerY=0
+            
+        # no valid placement found, put back for future attempts
+        positionless.append(atom)
+        return False
+
+
+            
+    
+    #####pseudocode for extendning the bond
+
+    #if it can't assign positions, go to each bond with a Carbon and extend it
+    #assign positions from there
+
+
      def assignPositions(self,width,height):#positionsList):
         """assign's the best positions to an atom for drawing"""
         self.updateAllSurroundingSets()
-        self.assignHorizontal(width,height)
-        #assign vertical positions to atoms
-        atomsToAssign=self.getPositionless()
-        atomsToAssign.sort(key=lambda atom: atom.nearestAssignedAtom().centerX)
-        atomList=atomsToAssign+[]
-        for atom in atomsToAssign:
-            assignedPositions=False
-            for atom1 in atom.surroundingSet:
-                #if an atom around it has positions
-                if atom1.centerX and atom1.centerY:
-                    #ATOM 1 HAS POSITIONS
-                    maxDisplaced=(0,0)
-                    maxDist=-1*float("inf")
-                    for dX,dY in [(0,65), (0, -65), (65, 0), (-65, 0)]:
-                        if self.hasAtomThere(atom1.centerX+dX,atom1.centerY+dY):
-                            continue
-                        if maxDisplaced==(0,0):
-                            maxDisplaced=(dX,dY)
-                        atom.centerX=atom1.centerX+dX
-                        atom.centerY=atom1.centerY+dY
-                        distance=atom.averageDistance(self.atoms)
-                        if distance>=maxDist:
-                            maxDist=distance
-                            maxDisplaced=(dX,dY)
-                        atom.centerX=0
-                        atom.centerY=0
-                    if maxDisplaced!=(0,0):
-                      atom.centerX=atom1.centerX+maxDisplaced[0]
-                      atom.centerY=atom1.centerY+maxDisplaced[1]       
-                    assignedPositions=True
-            if not assignedPositions:# and atom.symbol!="H":
-                print("JJJJJ")
-                atomsToAssign.append(atom)
+        self.atoms[0].centerX=500
+        self.atoms[0].centerY=300
+        #self.assignHorizontal(width,height)
+        self.recursiveAssignPositions()
         self.center(width,height)
-
-        return True
+        return
+        
      def extendBonds(self):
          """makes longer bonds if the space isn't enough"""
 
@@ -584,17 +656,17 @@ class Molecule:
          positions={}
          for atom in self.atoms:
              numLonePairs=atom.countDomains(":")
-             print(numLonePairs)
-             if True:
+             if numLonePairs:
                 addedLPs=0
                 for dX,dY in [(-75,0),(75,0),(0,-75),(0,75)]:
                     alreadyThere=self.hasAtomThere(atom.centerX+dX,
                                              atom.centerY+dY)
-                    if not alreadyThere or not atom.isBonded(alreadyThere):
+                    if not alreadyThere or (not alreadyThere in 
+                                            atom.surroundingSet):
                         if addedLPs>=numLonePairs:
                             break
-                        positions[str(atom.centerX+dX/3)+","+
-str(atom.centerY+dY/3)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
+                        positions[str(atom.centerX+dX/4)+","+
+str(atom.centerY+dY/4)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
                         addedLPs+=1
          return positions
      
@@ -625,8 +697,6 @@ str(atom.centerY+dY/3)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
              if not (atom.centerX and atom.centerY):
                  return False 
          return True
-     
-     
 
      
 
