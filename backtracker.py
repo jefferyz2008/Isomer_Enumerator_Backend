@@ -90,8 +90,8 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
         bondList=structure.getBondListNoH()
 
     #there can only be 1 perfect structure, so if there is, stop the search
-    #if minScore[0]==0 and moleculeList:
-      #  return (moleculeList,minScore)
+    if minScore[0]==0 and moleculeList:
+        return (moleculeList,minScore)
     
     lowestScore=minScore[0]
     currentScore=structure.formalChargeSum
@@ -131,7 +131,7 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
 
         atomOne=bond.atomOne
         atomTwo=bond.atomTwo
-        if octetDict[atomOne] or octetDict[atomTwo] or atomOne in {"H"}:
+        if octetDict[atomOne] or octetDict[atomTwo] or atomOne.symbol in {"H"}:
             continue
         oldStrOne=atomOne.strAtom
         oldStrTwo=atomTwo.strAtom
@@ -155,6 +155,7 @@ def backtrackPiBondsLonePairs(structure,moleculeList,bondList,
         
         atomOne.strAtom=atomOne.atomToStr()
         atomTwo.strAtom=atomTwo.atomToStr()
+
         backtrackPiBondsLonePairs(structure,moleculeList,bondList,
                                   minScore,visited)
         if hasOctetOne:
