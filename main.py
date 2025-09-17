@@ -13,7 +13,7 @@ executor = concurrent.futures.ProcessPoolExecutor()
 
 def getMoleculeInfo(molecule):
     """returns info about the molecule like polarity and molar mass"""
-    result={}
+    result={} 
     result["molar mass"] = str(round(molecule.getMolarMass(), 2)) + "g"
     result["polarity"]=molecule.getPolarity()
     result["σ bonds"]=str(molecule.countSigma())
@@ -63,11 +63,11 @@ async def getAllMolecules(moleculeName:str):
     result={}
     try:
        moleculeList=await asyncio.to_thread(getBestStructures,moleculeName)
+       print("molecule received")
     except:
         return {}
     for index in range(len(moleculeList)):
         result[str(index)]=getMolecule(moleculeList[index])
-    print(result)
     return result
 
 
@@ -79,10 +79,3 @@ if __name__ == "__main__":
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-# Serve static files
-api.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-# Serve index.html at root
-@api.get("/")
-async def serve_index():
-    return FileResponse("frontend/index.html")
