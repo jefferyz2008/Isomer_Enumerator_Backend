@@ -555,37 +555,14 @@ class Molecule:
                  atom.predecessor=adjacentAtom
          return True
               
-     def assignHorizontal(self,width,height):
-        queue=deque()
-        bondSet=set()
-        self.atoms[0].centerX=width/2
-        self.atoms[0].centerY=height/2
-        queue.append((None,self.atoms[0]))
-        while queue:
-            atomTuple=queue.popleft()
-            current=atomTuple[1]
-            predecessor=atomTuple[0]
-            if predecessor:
-                orderList=[(-65,0),(65,0)]
-                for dX,dY in orderList:
-
-                    if not self.hasAtomThere(predecessor.centerX+dX,
-                                             predecessor.centerY+dY):
-                        current.centerX=predecessor.centerX+dX
-                        current.centerY=predecessor.centerY+dY
-                        break
-            #makes it so atoms with more bonds are positioned horizontally
-            current.electronDomains.sort(key=lambda bond: len(
-                self.split(current,bond)) if 
-                isinstance(bond,Bond) else 0, reverse=True)
-            for domain in current.electronDomains:
-                if isinstance(domain,Bond) and domain not in bondSet:
-                    queue.append((current,domain.getOther(current)))
-                    bondSet.add(domain)
             
-     def recursiveAssignPositions(self, positionless=None):
-        if positionless is None:
+     def recursiveAssignPositions(self, positionless=None,bondList=None):
+        """recursively backtracks where atoms go on the canvas"""
+        if positionless is None and bondList is None:
+            bondList=self.getBondList()
             positionless = self.getPositionless()
+
+        #returns true if everything has a position
         if not positionless: 
             return True
         
@@ -593,7 +570,8 @@ class Molecule:
         #of an atom next to it
         self.updatePredecessors()
         positionless.sort(key=lambda atom: (len(self.splitOtherDirection(atom,
-                                                atom.predecessor).atoms)),reverse=True)
+                                                atom.predecessor).atoms)),
+                                                reverse=True)
         atom=positionless.pop(0)
         predecessor=atom.predecessor
         if not predecessor:
@@ -603,37 +581,65 @@ class Molecule:
             else:
                 return False
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        
         #coordinate which results in optimal placement
-        length=65
-        directions.sort(key=lambda direction: self.getAverageDistance
-                        (predecessor.centerX+length*direction[0],
-                            predecessor.centerY+length*direction[1]),reverse=True)
-        for direction in directions:
-            dx = length * direction[0]
-            dy = length * direction[1]
-            newX = predecessor.centerX + dx
-            newY = predecessor.centerY + dy
-            if self.hasAtomThere(newX, newY):
+        lengths=[65,130]
+        for length in lengths:
+            if length==130 and not (atom.countDomains("bond")>=3 or
+                                     predecessor.countDomains("bond")>=3):
                 continue
-            atom.centerX=newX
-            atom.centerY=newY
-            if self.recursiveAssignPositions(positionless):
-                return True 
-            atom.centerX=0
-            atom.centerY=0
+            if length==130 and atom.symbol=="H" or predecessor.symbol=="H":
+                continue
+
+            directions.sort(key=lambda direction: self.getAverageDistance
+                            (predecessor.centerX+length*direction[0],
+                                predecessor.centerY+length*direction[1]),
+                                reverse=True)
             
-        # no valid placement found, put back for future attempts
+            for direction in directions:
+                dx = length * direction[0]
+                dy = length * direction[1]
+                newX = predecessor.centerX + dx
+                newY = predecessor.centerY + dy
+                newBond=atom.getBond(predecessor)
+                if self.hasAtomThere(newX, newY):
+                    continue
+                atom.centerX=newX
+                atom.centerY=newY
+                shouldContinue=False
+                if length==130:
+                    newBond.isLong=True
+                    for bond in bondList:
+                        if (not bond.sameAtoms(newBond) and
+                            bond.intersects(newBond)):
+                            shouldContinue=True
+                            break
+                        if bond.intersectsAtom(atom):
+                            shouldContinue=True
+                            break
+                for atom_ in self.atoms:
+                    if shouldContinue:
+                        break
+                    if newBond.intersectsAtom(atom_):
+                        shouldContinue=True
+                        break
+                    for bond_ in bondList:
+                        if bond_.intersectsAtom(atom):
+                            shouldContinue=True
+                            break
+                if not shouldContinue:
+                    if self.recursiveAssignPositions(positionless,bondList):
+                        return True 
+                atom.centerX=0
+                atom.centerY=0
+                if length==130:
+                    newBond.isLong=False
+                
+        #no valid placement found, put back for future attempts
         positionless.append(atom)
         return False
+     
 
 
-            
-    
-    #####pseudocode for extendning the bond
-
-    #if it can't assign positions, go to each bond with a Carbon and extend it
-    #assign positions from there
 
 
      def assignPositions(self,width,height):#positionsList):
@@ -681,7 +687,8 @@ str(atom.centerY+dY/4)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
                                 atomOne.centerX==atomTwo.centerX else "-")
             
             bonds[str((atomOne.centerX+atomTwo.centerX)//2)+","
-                +str((atomOne.centerY+atomTwo.centerY)//2)]=typeAndOrientation
+                +str((atomOne.centerY+atomTwo.centerY)//2)]=(typeAndOrientation+
+                                                ("l" if bond.isLong else ""))
         return bonds
      
      def hasAtomThere(self,xPos,yPos):
@@ -697,7 +704,5 @@ str(atom.centerY+dY/4)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
              if not (atom.centerX and atom.centerY):
                  return False 
          return True
-
      
-
 
