@@ -12,7 +12,6 @@ class Atom:
     ]
     def __init__(self,symbol):
         self.symbol=symbol
-       
 
         #electron domains contain bonds and lone pairs
         self.electronDomains =[]
@@ -163,16 +162,17 @@ class Atom:
         return False
     
     def addLonePair(self):
+        """adds lone pair to atom"""
         self.currentElectrons+=2
         self.electronDomains.append(":")
         return True
     
     def removeLonePair(self):
+        """removes lone pair from atom"""
         #checks if atom has a lone pair
         try:
             self.electronDomains.remove(":")
             self.currentElectrons-=2
-           # self.strAtom.strip(":")
             return True
         except:
             return False
@@ -202,10 +202,10 @@ class Atom:
         #updates surroundings
         surroundingSet.add(other)
         otherSurroundingSet.add(self)
-
         return newBond
     
     def unBond(self,other,bond):
+        """removes bond from both atoms"""
         self.currentElectrons-=2
         other.currentElectrons-=2
         self.electronDomains.remove(bond)
@@ -219,6 +219,9 @@ class Atom:
         valence=self.valenceElectrons
         for domain in self.electronDomains:
             valence-=(2 if domain==":" else domain.electrons/2)
+        #noble gasses don't get formal charge
+        if self.valenceElectrons==8 and valence:
+            return 1000000
         return valence
     
     def atomToStr(self,lp=False,polarityCheck=False):
@@ -238,7 +241,7 @@ class Atom:
             for _ in range(numLps):
                 returnStr+=":"
         
-        return returnStr
+        return "("+returnStr+")"
 
                  
     def rearrange(self,lPs=False):
@@ -304,7 +307,7 @@ class Atom:
                     continue
                 bondSet.add(domain)   
                 queue.append(domain.getOther(current))
-        assert(1==0)
+        return 
     
 
     
@@ -321,8 +324,16 @@ class Atom:
         return distSum/numAtoms if numAtoms else 0
     
     def isAssigned(self):
+        """does it have a position"""
         return self.centerX and self.centerY
-        
+    
+    def getBond(self,other):
+        for domain in self.electronDomains:
+            if domain!=":" and domain.getOther(self) is other:
+                return domain
+        return None
+    
+
 
 
 
@@ -379,6 +390,7 @@ class Atom:
                 return ["octahedral","90°"]
         return ["N/A","N/A"]
     
+    
     def getRingDict(self):
          """gets a ring of atoms, starting with this atom"""
          predDict={}
@@ -417,7 +429,8 @@ class Atom:
         return self is other
 
 class Bond:
-     __slots__ = ["type", "electrons", "atomOne", "atomTwo", "numModifications"]
+     __slots__ = ["type", "electrons", "atomOne", "atomTwo", "numModifications"
+                  ,"startX","endX","startY","endY","isLong"]
      def __init__(self,type,atomOne,atomTwo):
           self.type=type
           self.electrons=2 if type=="-" else (4 if type=="=" else 6)
@@ -426,7 +439,15 @@ class Bond:
 
           #for backtracking efficiency
           self.numModifications=0
-     
+
+          #for bonds coordinates
+          self.startX=0
+          self.startY=0
+          self.endX=0
+          self.endY=0
+
+          self.isLong=False
+
      def sameAtoms(self,other):
          """Returns true if the atoms attached to each bond are the same atom"""
          selfAtomOne=self.atomOne
@@ -492,6 +513,7 @@ selfAtomTwo==other[0]))
          return False
      
      def getOther(self,atom):
+         """returns the atom that is not the atom"""
          atomOne_=self.atomOne
          atomTwo_=self.atomTwo
          #gets the atom in the bond thats not the given atom
@@ -516,20 +538,43 @@ selfAtomTwo==other[0]))
                  queue.append(domain.getOther(current))
          return visited
      
-     def extend(self,atom):
-         """extends length of bond in the direction of the atom"""
-         assert(atom is self.atomOne or atom is self.atomTwo)
-         #if dX, expand in the right direction. if dY, expand in up/down direction
-         dX=self.atomOne.centerX-self.atomTwo.centerX
-         dY=self.atomOne.centerY-self.atomTwo.centerY
-         if dX:
-             #check to expand right or left
-             pass
-         atoms=self.getFrontier(atom)
-         for item in atoms:
-             pass
+     
+     def intersects(self,other):
+         """returns true if bond intersects other bond"""
+         atomOne=self.atomOne
+         atomTwo=self.atomTwo
+         otherAtomOne=other.atomOne
+         otherAtomTwo=other.atomTwo
+         if (atomOne is otherAtomOne or atomOne is otherAtomTwo 
+             or atomTwo is otherAtomOne or atomTwo is otherAtomTwo):
+             return False
+         if (not atomOne.centerX and atomOne.centerY and atomTwo.centerX 
+             and atomTwo.centerY):
+             return False
+         intersection=lineIntersection((atomOne.centerX,atomOne.centerY)
+                        ,(atomTwo.centerX,atomTwo.centerY),
+                        (otherAtomOne.centerX,otherAtomOne.centerY),
+                        (otherAtomTwo.centerX,otherAtomTwo.centerY))
+         if not intersection:
+             return False
+         if (intersection==(atomOne.centerX,atomOne.centerY) or 
+             intersection==(atomTwo.centerX,atomTwo.centerY)):
+             return False 
+         return True
+     
+     def intersectsAtom(self,atom):
+         atomOne=self.atomOne
+         atomTwo=self.atomTwo
+         if atom is atomOne or atom is atomTwo:
+             return False
+         centerX=atom.centerX
+         centerY=atom.centerY
+         return pointOnSegment((atomOne.centerX,atomOne.centerY),
+                               (atomTwo.centerX,atomTwo.centerY),
+                               (centerX,centerY))
          
-
+         
+         
      def __str__(self):
          return (self.atomOne.symbol+
                  self.type+self.atomTwo.symbol)
@@ -542,12 +587,6 @@ selfAtomTwo==other[0]))
      
      def __hash__(self):
         return hash(id(self))
-
-
-
-
-
-     
 
 
 
