@@ -587,7 +587,7 @@ class Molecule:
             if length==130 and not (atom.countDomains("bond")>=3 or
                                      predecessor.countDomains("bond")>=3):
                 continue
-            if length==130 and atom.symbol=="H" or predecessor.symbol=="H":
+            if length==130 and (atom.symbol=="H" or predecessor.symbol=="H"):
                 continue
 
             directions.sort(key=lambda direction: self.getAverageDistance
