@@ -60,6 +60,7 @@ api.add_middleware(
 
 @api.get("/molecule")
 async def getAllMolecules(moleculeName:str):
+
     result={}
     try:
        moleculeList=await asyncio.to_thread(getBestStructures,moleculeName)
@@ -68,7 +69,12 @@ async def getAllMolecules(moleculeName:str):
         return {}
     for index in range(len(moleculeList)):
         result[str(index)]=getMolecule(moleculeList[index])
+    molList=[]
+    print(result)
     return result
+
+
+
 
 
 
@@ -76,6 +82,3 @@ async def getAllMolecules(moleculeName:str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(api, host="127.0.0.1", port=8000, reload=False)
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-
