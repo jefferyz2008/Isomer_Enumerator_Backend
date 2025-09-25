@@ -8,8 +8,11 @@ from breadthFirst import*
 from moleculeSolver import*
 from tokenizer import*
 import asyncio
+import json
 import concurrent.futures
 executor = concurrent.futures.ProcessPoolExecutor()
+
+
 
 def getMoleculeInfo(molecule):
     """returns info about the molecule like polarity and molar mass"""
@@ -49,7 +52,6 @@ def getMolecule(molecule):
             "atomsInfo":atomsInfo,"molInfo":molInfo}
 
 api=FastAPI()
-# allow requests from Electron (localhost)
 api.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -60,7 +62,13 @@ api.add_middleware(
 
 @api.get("/molecule")
 async def getAllMolecules(moleculeName:str):
-
+    testMol=parseMolecule(moleculeName)
+    #moleculeStr is a unique string of the molecule
+    moleculeStr=testMol.uniqueString()
+    with open("cache.json", "r") as f:
+        data = json.load(f)
+    if moleculeStr in data:
+        return data[moleculeStr]
     result={}
     try:
        moleculeList=await asyncio.to_thread(getBestStructures,moleculeName)
@@ -69,9 +77,21 @@ async def getAllMolecules(moleculeName:str):
         return {}
     for index in range(len(moleculeList)):
         result[str(index)]=getMolecule(moleculeList[index])
-    molList=[]
-    print(result)
+    data[moleculeStr]=result
+    with open("cache.json", "w") as f:
+        json.dump(data, f, indent=4)
     return result
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(api, host="127.0.0.1", port=8000, reload=False)
+
 
 
 
