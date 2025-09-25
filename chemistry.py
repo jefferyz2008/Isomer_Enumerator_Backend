@@ -224,8 +224,10 @@ class Atom:
             return 1000000
         return valence
     
-    def atomToStr(self,lp=False,polarityCheck=False):
+    def atomToStr(self,lp=False,polarityCheck=False): #lp means 
+        #strings contain lone pairs, polarity check doesn't include bond types
         """turns atom into a string for duplicate and polarity check"""
+
         self.rearrange(lp)
         returnStr=self.symbol+"|"
         for domain in self.electronDomains:
@@ -288,11 +290,14 @@ class Atom:
     
     def getAdjacentAtom(self):
         """adjacent atom with a position"""
+        if self.predecessor:
+            return self.predecessor
         for domain in self.electronDomains:
             if (isinstance(domain,Bond) and domain.getOther(self).centerX and 
                 domain.getOther(self).centerY):
                 return domain.getOther(self)
         return None
+    
     def nearestAssignedAtom(self):
         """nearest atom with a position"""
         queue=deque()
@@ -587,6 +592,12 @@ selfAtomTwo==other[0]))
      
      def __hash__(self):
         return hash(id(self))
+
+
+
+
+
+     
 
 
 
