@@ -1,0 +1,871 @@
+{
+    "HHHHCCOO0": {
+        "0": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "O",
+                "500.0,235": "O",
+                "370.0,300": "H",
+                "435.0,365": "H",
+                "435.0,235": "H",
+                "630.0,300": "H"
+            },
+            "bonds": {
+                "467.0,300": "--",
+                "500.0,267": "=|",
+                "532.0,300": "--",
+                "402.0,300": "--",
+                "435.0,332": "-|",
+                "435.0,267": "-|",
+                "597.0,300": "--"
+            },
+            "lonePairs": {
+                "565.0,281.25": ":|",
+                "565.0,318.75": ":|",
+                "481.25,235.0": ":-",
+                "518.75,235.0": ":-"
+            },
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "60.06g",
+                "polarity": "polar",
+                "\u03c3 bonds": "7",
+                "\u03c0 bonds": "1"
+            }
+        },
+        "1": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "O",
+                "500.0,235": "O",
+                "370.0,300": "H",
+                "435.0,365": "H",
+                "630.0,300": "H",
+                "500.0,170": "H"
+            },
+            "bonds": {
+                "467.0,300": "=-",
+                "532.0,300": "--",
+                "500.0,267": "-|",
+                "402.0,300": "--",
+                "435.0,332": "-|",
+                "597.0,300": "--",
+                "500.0,202": "-|"
+            },
+            "lonePairs": {
+                "565.0,281.25": ":|",
+                "565.0,318.75": ":|",
+                "481.25,235.0": ":-",
+                "518.75,235.0": ":-"
+            },
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,170": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "60.06g",
+                "polarity": "polar",
+                "\u03c3 bonds": "7",
+                "\u03c0 bonds": "1"
+            }
+        },
+        "2": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "O",
+                "370.0,300": "O",
+                "500.0,235": "H",
+                "500.0,365": "H",
+                "435.0,235": "H",
+                "630.0,300": "H"
+            },
+            "bonds": {
+                "467.0,300": "--",
+                "532.0,300": "--",
+                "402.0,300": "=-",
+                "500.0,267": "-|",
+                "500.0,332": "-|",
+                "435.0,267": "-|",
+                "597.0,300": "--"
+            },
+            "lonePairs": {
+                "565.0,281.25": ":|",
+                "565.0,318.75": ":|",
+                "351.25,300.0": ":-",
+                "370.0,281.25": ":|"
+            },
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "60.06g",
+                "polarity": "polar",
+                "\u03c3 bonds": "7",
+                "\u03c0 bonds": "1"
+            }
+        },
+        "3": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "O",
+                "370.0,300": "O",
+                "500.0,235": "H",
+                "435.0,365": "H",
+                "630.0,300": "H",
+                "305.0,300": "H"
+            },
+            "bonds": {
+                "467.0,300": "=-",
+                "532.0,300": "--",
+                "402.0,300": "--",
+                "500.0,267": "-|",
+                "435.0,332": "-|",
+                "597.0,300": "--",
+                "337.0,300": "--"
+            },
+            "lonePairs": {
+                "565.0,281.25": ":|",
+                "565.0,318.75": ":|",
+                "370.0,281.25": ":|",
+                "370.0,318.75": ":|"
+            },
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "305.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "60.06g",
+                "polarity": "polar",
+                "\u03c3 bonds": "7",
+                "\u03c0 bonds": "1"
+            }
+        },
+        "4": {
+            "atoms": {
+                "565.0,300": "C",
+                "435.0,300": "C",
+                "500.0,300": "O",
+                "630.0,300": "O",
+                "565.0,235": "H",
+                "370.0,300": "H",
+                "435.0,365": "H",
+                "435.0,235": "H"
+            },
+            "bonds": {
+                "597.0,300": "=-",
+                "532.0,300": "--",
+                "467.0,300": "--",
+                "565.0,267": "-|",
+                "402.0,300": "--",
+                "435.0,332": "-|",
+                "435.0,267": "-|"
+            },
+            "lonePairs": {
+                "500.0,281.25": ":|",
+                "500.0,318.75": ":|",
+                "648.75,300.0": ":-",
+                "630.0,281.25": ":|"
+            },
+            "atomsInfo": {
+                "565.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "trigonal planar",
+                    "bond angles": "120\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "bent",
+                    "bond angles": "<109\u00b0",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "sp2",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "60.06g",
+                "polarity": "polar",
+                "\u03c3 bonds": "7",
+                "\u03c0 bonds": "1"
+            }
+        }
+    },
+    "HHHHHHHHHHHHCCCCC0": {
+        "0": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "500.0,170": "C",
+                "565.0,300": "C",
+                "500.0,430": "C",
+                "435.0,365": "H",
+                "370.0,300": "H",
+                "435.0,235": "H",
+                "565.0,170": "H",
+                "500.0,105": "H",
+                "435.0,170": "H",
+                "565.0,235": "H",
+                "630.0,300": "H",
+                "565.0,365": "H",
+                "435.0,430": "H",
+                "500.0,495": "H",
+                "565.0,430": "H"
+            },
+            "bonds": {
+                "467.0,300": "--",
+                "500.0,235": "-|l",
+                "532.0,300": "--",
+                "500.0,365": "-|l",
+                "435.0,332": "-|",
+                "402.0,300": "--",
+                "435.0,267": "-|",
+                "532.0,170": "--",
+                "500.0,137": "-|",
+                "467.0,170": "--",
+                "565.0,267": "-|",
+                "597.0,300": "--",
+                "565.0,332": "-|",
+                "467.0,430": "--",
+                "500.0,462": "-|",
+                "532.0,430": "--"
+            },
+            "lonePairs": {},
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,170": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,430": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,170": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,105": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,170": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,430": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,495": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,430": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "72.17g",
+                "polarity": "non-polar",
+                "\u03c3 bonds": "16",
+                "\u03c0 bonds": "0"
+            }
+        },
+        "1": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "C",
+                "500.0,430": "C",
+                "370.0,300": "C",
+                "500.0,235": "H",
+                "435.0,235": "H",
+                "435.0,365": "H",
+                "565.0,365": "H",
+                "630.0,300": "H",
+                "565.0,235": "H",
+                "565.0,430": "H",
+                "500.0,495": "H",
+                "435.0,430": "H",
+                "370.0,235": "H",
+                "305.0,300": "H",
+                "370.0,365": "H"
+            },
+            "bonds": {
+                "467.0,300": "--",
+                "532.0,300": "--",
+                "500.0,365": "-|l",
+                "402.0,300": "--",
+                "500.0,267": "-|",
+                "435.0,267": "-|",
+                "435.0,332": "-|",
+                "565.0,332": "-|",
+                "597.0,300": "--",
+                "565.0,267": "-|",
+                "532.0,430": "--",
+                "500.0,462": "-|",
+                "467.0,430": "--",
+                "370.0,267": "-|",
+                "337.0,300": "--",
+                "370.0,332": "-|"
+            },
+            "lonePairs": {},
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,430": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,430": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,495": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,430": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "305.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "72.17g",
+                "polarity": "non-polar",
+                "\u03c3 bonds": "16",
+                "\u03c0 bonds": "0"
+            }
+        },
+        "2": {
+            "atoms": {
+                "500.0,300": "C",
+                "435.0,300": "C",
+                "565.0,300": "C",
+                "370.0,300": "C",
+                "630.0,300": "C",
+                "500.0,235": "H",
+                "500.0,365": "H",
+                "435.0,235": "H",
+                "435.0,365": "H",
+                "565.0,235": "H",
+                "565.0,365": "H",
+                "305.0,300": "H",
+                "370.0,235": "H",
+                "370.0,365": "H",
+                "695.0,300": "H",
+                "630.0,235": "H",
+                "630.0,365": "H"
+            },
+            "bonds": {
+                "467.0,300": "--",
+                "532.0,300": "--",
+                "402.0,300": "--",
+                "597.0,300": "--",
+                "500.0,267": "-|",
+                "500.0,332": "-|",
+                "435.0,267": "-|",
+                "435.0,332": "-|",
+                "565.0,267": "-|",
+                "565.0,332": "-|",
+                "337.0,300": "--",
+                "370.0,267": "-|",
+                "370.0,332": "-|",
+                "662.0,300": "--",
+                "630.0,267": "-|",
+                "630.0,332": "-|"
+            },
+            "lonePairs": {},
+            "atomsInfo": {
+                "500.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "435.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "565.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "370.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "630.0,300": {
+                    "Hybirdization": "sp3",
+                    "VSEPR": "tetrahedral",
+                    "bond angles": "109\u00b0",
+                    "formal charge": "0"
+                },
+                "500.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "500.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "435.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "565.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "305.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "370.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "695.0,300": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,235": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                },
+                "630.0,365": {
+                    "Hybirdization": "N/A",
+                    "VSEPR": "N/A",
+                    "bond angles": "N/A",
+                    "formal charge": "0"
+                }
+            },
+            "molInfo": {
+                "molar mass": "72.17g",
+                "polarity": "non-polar",
+                "\u03c3 bonds": "16",
+                "\u03c0 bonds": "0"
+            }
+        }
+    }
+}
