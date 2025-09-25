@@ -13,8 +13,10 @@ class Molecule:
      def __init__(self,atoms,charge,formula):
           #putting atoms with higher bonding capacity first
           #to make backtracking more efficient
-          atoms.sort(key=lambda atom: (atom.prefBonds,
-                                      atom.atomicNumber), reverse=True)
+
+          if len(atoms) and not atoms[0].electronDomains:
+            atoms.sort(key=lambda atom: (atom.prefBonds,
+                                        atom.atomicNumber), reverse=True)
           self.atoms=atoms
           self.charge=charge
           self.formula=formula
@@ -34,6 +36,8 @@ class Molecule:
           #the number of electrons that should be contained in bonds
           self.idealBondElectrons=(sum([atom.octetElectrons for atom in atoms])-
                                    self.numElectrons)
+          
+          
 
           #this is a dictionary with an atom as a key and a bool, true or false
           #representing whether the atom has an octet.
@@ -46,6 +50,7 @@ class Molecule:
           if self.numAtoms<3 or self.numAtoms>8:
               for atom in atoms:
                   atom.canExpandOctet=False
+         
           
           for atom in atoms:
               if self.count(atom.symbol)!=1:
@@ -186,6 +191,7 @@ class Molecule:
              score=self.sumFormalCharges()
          else:
              score=self.formalChargeSum
+             score=self.sumFormalCharges()
          bondList=self.getBondList()
          for bond in bondList:
              bondType=bond.type
@@ -256,7 +262,10 @@ class Molecule:
          atomList=self.sortAtoms()
          returnStr=""
          for atom in atomList:
-             returnStr+=atom.strAtom
+             if not polarityCheck:
+                returnStr+=atom.strAtom
+             else:
+                 returnStr+=atom.atomToStr(False,True)
          return returnStr
 
      def cloneMolecule(self):
@@ -359,7 +368,8 @@ class Molecule:
          return newMolecule.molToStr(True)
      
      def splitOtherDirection(self,atom,atom2):
-         """gets frontier of molecule in the opposite direction of the atome"""
+         """returns a molecule that represents the frontier of molecule in the 
+         opposite direction of the atom"""
          if not atom2:
              return Molecule([],0,"")
          bondSet=set()
@@ -442,6 +452,14 @@ class Molecule:
          #it's not a ring
          if not self.isBondedOrCircular()[1]:
              return False
+     def uniqueString(self):
+         """returns a string of all atom symbols, used for hashing"""
+         self.atoms.sort(key=lambda atom: atom.molarMass)
+         returnStr=""
+         for atom in self.atoms:
+             returnStr+=atom.symbol
+         returnStr+=str(self.charge)
+         return returnStr
          
 
 
@@ -651,10 +669,6 @@ class Molecule:
         self.recursiveAssignPositions()
         self.center(width,height)
         return
-        
-     def extendBonds(self):
-         """makes longer bonds if the space isn't enough"""
-
 
      
      def getLonePairs(self):
@@ -705,4 +719,12 @@ str(atom.centerY+dY/4)]=":-" if ((dX,dY)==(-75,0) or (dX,dY)==(75,0)) else ":|"
                  return False 
          return True
      
+     
+
+             
+         
+         
+         
+
+
 
