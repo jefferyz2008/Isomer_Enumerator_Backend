@@ -8,7 +8,6 @@ import time
 def getAllStructures(molecule):
     "takes all skeletal structures and finds solutions for them"
     moleculeList=getSkeletalStructuresDFS(molecule)
-    #prettyPrintList(moleculeList)
     print(len(moleculeList))
     validStructs=[]
     #default min score
@@ -22,17 +21,12 @@ def getAllStructures(molecule):
 
 def getAllStructures2(molecule):
     moleculeList=getSkeletalStructuresDFS(molecule)
-  #  prettyPrintList(moleculeList)
-    print(len(moleculeList))
     completeList=[]
     minScore=[float('inf')]
-    start=time.perf_counter()
     for mol in moleculeList:
         newMolecule=backtrackPiBondsLonePairs(mol,[],None,minScore,set())
         minScore=newMolecule[1]
         completeList+=newMolecule[0]
-    end=time.perf_counter()
-  #  print(start-end)
     return completeList
         
 def getBestStructures(moleculeName):
@@ -41,7 +35,6 @@ def getBestStructures(moleculeName):
     print("getting structure")
     molecule=parseMolecule(moleculeName)
     func=getAllStructures if molecule.expandedOctet else getAllStructures2
-
     validStructures=func(molecule)
     validStructures.sort(key=lambda molecule: molecule.getScore())
     allBestStructs=[molecule for molecule in validStructures if
