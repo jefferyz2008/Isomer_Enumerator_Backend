@@ -62,7 +62,10 @@ api.add_middleware(
 
 @api.get("/molecule")
 async def getAllMolecules(moleculeName:str):
-    testMol=parseMolecule(moleculeName)
+    try:
+        testMol=parseMolecule(moleculeName)
+    except:
+        return {}
     #moleculeStr is a unique string of the molecule
     moleculeStr=testMol.uniqueString()
     with open("cache.json", "r") as f:
